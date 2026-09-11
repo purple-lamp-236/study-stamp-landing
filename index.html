@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StudyStamp · Study streak, one photo a day</title>
+    <meta name="description" content="StudyStamp is a free iPhone app that keeps your study streak from one photo of your book and the study time you enter yourself. No timer, no account, no ads.">
+    <!--
+      앱을 소개하는 랜딩 페이지다. 기준이 되는 판은 1.3.0(빌드 54)이다.
+      담을 것은 `05_release/landing_page_plan.md`에 정해져 있다. 섹션 ①~⑨의 순서를 그대로 따른다.
+
+      **한 장에 한국어 · 영어 · 일본어가 모두 들어 있다.** 위쪽 탭으로 바꿔 본다.
+      처음 열 때는 **영어**를 보여 준다. 주소 뒤에 `#ko` · `#ja`를 붙이면 그 언어로 열린다.
+      세 언어 묶음(`<section data-lang>`)의 내용은 서로 같아야 한다. 한 언어를 고치면 셋을 함께 고친다.
+      탭의 모양과 동작 · 색 · 글꼴은 지원 페이지 · 방침 페이지와 같은 값을 쓴다.
+
+      **그림은 같은 폴더의 `study-stamp-landing-images/`에서 가져온다.**
+      HTML을 GitHub Pages에 올릴 때 이 폴더를 함께 올려야 한다.
+      언어마다 그 언어로 찍은 스크린샷 여섯 장을 쓴다(파일 이름은 세 언어가 같다).
+
+      **탭 제목은 각 `<section data-lang>`의 `data-title` 값으로 정한다.**
+      아래 스크립트가 언어를 바꿀 때 그 값을 `document.title`에 넣는다.
+      `data-title`이 없으면 그 언어의 `<h1>` 글자를 대신 쓴다.
+      세 섹션에는 `lang` 속성도 함께 붙인다. 화면 낭독기가 언어를 바르게 읽게 하려는 것이다.
+
+      섹션 안쪽의 id는 `hero-ko`처럼 **언어 코드를 뒤에 붙인다.**
+      세 언어가 같은 섹션을 갖고 있어서, 붙이지 않으면 id가 한 장에 세 번씩 겹친다.
+      **아래 스크립트가 이 규칙에 기대고 있다.** `#new-ko`로 들어오면 끝의 `-ko`를 읽어
+      한국어를 보인 뒤 그 자리로 옮긴다. 그래서 id에서 언어 코드를 빼면 안 된다.
+
+      판이 바뀌면 손볼 자리는 기획서에 표로 적혀 있다.
+      특히 ⑤ `판마다 새로 들어간 것`은 판별 블록을 `<details>`로 쌓아 둔 자리다.
+      새 판이 나오면 **맨 위에 그 판의 블록을 하나 더하고, 바로 아래 블록에서 `open`을 뺀다.**
+      `open`은 언제나 맨 위 블록 하나에만 둔다. 아래에 있는 지난 판의 글은 고치지 않는다.
+      항목 안에 들어 있는 `어떻게 하나요` 접기(`.how`)는 이 규칙과 별개이고 **언제나 접어 둔다.**
+      (근거는 `05_release/landing_page_version_history_plan.md`)
+
+      외부 자원을 전혀 쓰지 않는다. 글꼴 · 스크립트 · 분석 도구를 밖에서 받아오지 않는다.
+    -->
+    <style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; padding: 32px 20px 64px;
+    background: #E6EBF2; color: #16181D;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+    line-height: 1.7; word-break: keep-all; overflow-wrap: break-word;
+  }
+  /* 일본어는 낱말 사이를 띄어 쓰지 않는다. 그래서 `keep-all`을 그대로 두면 한 문단이 통째로
+     낱말 하나가 되어, 좁은 화면에서 줄이 바뀌지 못하고 글이 화면 밖으로 넘친다(권한 표에서 실제로 그랬다).
+     일본어 묶음만 보통 규칙으로 돌린다. 그러면 마침표가 줄 맨 앞에 오지 않게 브라우저가 알아서 맞춘다. */
+  section[lang="ja"] { word-break: normal; }
+
+  /* 키보드로 옮겨 다닐 때 지금 어디에 있는지 보이는 테두리다.
+     움직임에 약한 사람도 있어서 이 테두리에는 애니메이션을 주지 않는다. */
+  a:focus-visible,
+  .tabs button:focus-visible,
+  .gallery-controls button:focus-visible,
+  .track:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid #1F4B99; outline-offset: 2px;
+  }
+  /* 파란 단추 위에서는 파란 테두리가 묻힌다. 바깥 바탕(#E6EBF2)과 대비가 큰 검은색을 쓴다. */
+  .store:focus-visible { outline: 3px solid #16181D; outline-offset: 3px; }
+  /* 글은 한 칼럼(40rem), 스크린샷 섹션만 넓게(60rem) 쓴다. */
+  .col { max-width: 40rem; margin: 0 auto; }
+  .col-wide { max-width: 60rem; margin: 0 auto; }
+  h1 { font-size: 1.75rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 40px 0 8px; }
+  h3 { font-size: .95rem; margin: 20px 0 4px; }
+  p { margin: 8px 0; color: #4A4E57; }
+  .note { font-size: .9rem; color: #62666F; }
+  a { color: #16181D; }
+
+  /* 언어 탭 — 지원 페이지 · 방침 페이지와 같은 값이다. */
+  .tabs { display: flex; gap: 8px; margin: 0 auto 28px; padding: 0; max-width: 40rem; }
+  .tabs button {
+    font: inherit; font-size: .95rem; padding: 6px 14px; border-radius: 999px;
+    border: 1px solid #D6D9E0; background: #FFFFFF; color: #4A4E57; cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { background: #1F4B99; border-color: #1F4B99; color: #FFFFFF; }
+  html.js section[data-lang][hidden] { display: none; }
+
+  /* ① 첫 화면 */
+  .hero { text-align: center; margin-bottom: 8px; }
+  /* 런치 로고는 바탕이 비어 있는 그림이라 테두리도 배경도 주지 않는다. */
+  .hero .launch-logo {
+    width: 210px; height: auto; display: block; margin: 0 auto 12px;
+  }
+  /* 앱 이름은 제목이 아니라 보통 글로 둔다. h1 자리에는 무슨 앱인지 말하는 문장이 온다. */
+  .hero .brand { font-size: 1.05rem; font-weight: 700; color: #16181D; margin: 0 0 2px; }
+  .hero h1 { margin: 0 0 12px; }
+  .hero .lead { color: #16181D; }
+  .hero-shot {
+    width: 280px; max-width: 100%; height: auto; display: block; margin: 28px auto 0;
+    border-radius: 24px; border: 1px solid #E4E7EC;
+  }
+
+  /* 앱스토어 버튼 — 애플 배지 그림을 쓰지 않고 직접 만든 단추다.
+     좁은 화면에서는 `무료` 표시가 버튼 아래로 내려가도록 줄바꿈을 허용한다. */
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0 0; }
+  .hero .cta { justify-content: center; }
+  /* 누를 수 있는 글자는 두 줄로 나뉘지 않게 한다. 두 줄이 되면 누르는 자리가 어디까지인지 흐려진다. */
+  .store {
+    display: inline-block; background: #1F4B99; color: #FFFFFF; text-decoration: none;
+    padding: 12px 24px; border-radius: 999px; font-weight: 600; white-space: nowrap;
+  }
+  .price { color: #62666F; font-size: .95rem; }
+
+  /* ③ 끝에 한 번 더 두는 버튼 묶음이다. 가운데로 모은다. */
+  .screens-cta { margin-top: 28px; text-align: center; }
+  .screens-cta .cta { justify-content: center; }
+
+  /* 첫 화면에서 아래 섹션으로 바로 가는 링크 줄 — 가운뎃점은 HTML에 글자로 적어 두었다.
+     링크와 링크 사이에서는 줄이 바뀌어도 되지만, 링크 하나가 두 줄로 나뉘지는 않게 한다. */
+  .jump { margin: 14px 0 0; font-size: .9rem; color: #62666F; text-align: center; }
+  .jump a { color: #4A4E57; white-space: nowrap; }
+
+  /* ② 세 단계 */
+  .steps {
+    list-style: none; counter-reset: step; margin: 12px 0 0; padding: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  .steps li {
+    counter-increment: step; background: #FFFFFF; border: 1px solid #E4E7EC;
+    border-radius: 14px; padding: 16px;
+  }
+  .steps li::before {
+    content: counter(step);
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 999px;
+    background: #1F4B99; color: #FFFFFF; font-size: .85rem; line-height: 1;
+    margin-bottom: 8px;
+  }
+  .steps b { display: block; }
+  .steps span { display: block; font-size: .9rem; color: #62666F; }
+
+  /* ③ 화면으로 보는 기능 — 가로로 넘겨 보는 슬라이드 여섯 장이다.
+     세로로 쌓아 두면 여섯 장 때문에 페이지가 너무 길어져서, 앱스토어의 스크린샷과 같은 방식으로 바꾸었다.
+     넘기는 일은 CSS의 스크롤 스냅이 맡는다. 그래서 스크립트가 꺼져 있어도 손가락과 트랙패드로 넘어간다. */
+  .gallery { margin: 16px 0 0; }
+  .track {
+    display: flex; gap: 0;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 0 12px; scrollbar-width: thin;
+    /* 슬라이드 한 장의 폭과 트랙의 폭이 정확히 같아야 버튼 한 번에 한 장씩 넘어간다.
+       그래서 좌우 안쪽 여백과 스냅 기준을 모두 0으로 둔다. */
+    scroll-padding: 0;
+  }
+  /* 어느 폭에서든 한 번에 한 장만 보이게 한다. 슬라이드가 트랙 폭을 그대로 차지하므로
+     `track.clientWidth`가 곧 한 장의 폭이 되고, 위치 표시도 마지막 장에서 `6 / 6`까지 간다. */
+  /* `box-sizing: border-box`가 있어야 적어 둔 폭이 안쪽 여백과 테두리까지 포함한 폭이 된다.
+     이것이 없으면 슬라이드가 트랙보다 넓어져서 한 번에 한 장씩 딱 떨어지지 않는다. */
+  .slide {
+    flex: 0 0 100%; box-sizing: border-box; scroll-snap-align: start;
+    padding: 4px 12px 4px;
+  }
+  /* 카드 모양은 슬라이드 안쪽 요소에 준다. 슬라이드 자체에 주면 카드가 트랙 폭을 꽉 채워서
+     좌우 여백이 사라지고, 카드가 화면 끝에 붙은 것처럼 보인다. */
+  .slide-card {
+    background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 18px;
+    padding: 16px; margin: 0;
+  }
+  /* 넓은 화면에서 그림이 카드만큼 커지면 앱 화면이 실제보다 크게 보인다. 300px에서 멈춘다. */
+  .slide-card img {
+    width: 100%; max-width: 300px; box-sizing: border-box;
+    height: auto; display: block; margin: 0 auto;
+    border-radius: 14px; border: 1px solid #E4E7EC;
+  }
+  .slide-card figcaption { text-align: center; }
+  .slide-card h3 { margin: 12px 0 4px; font-size: 1.05rem; }
+  .slide-card p { margin: 0; color: #4A4E57; }
+
+  /* 이전 · 다음 버튼과 위치 표시 — 손가락으로 넘기기 어려운 환경에서도 넘길 수 있게 둔다.
+     버튼은 44×44px보다 작아지지 않는다. 손가락으로 누르기에 필요한 최소 크기다. */
+  .gallery-controls {
+    display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 4px;
+  }
+  .gallery-controls button {
+    font: inherit; font-size: 1.25rem; line-height: 1;
+    min-width: 44px; min-height: 44px; padding: 0;
+    border-radius: 999px; border: 1px solid #D6D9E0;
+    background: #FFFFFF; color: #16181D; cursor: pointer;
+  }
+  .gallery-controls button:disabled { opacity: .4; cursor: default; }
+  .gallery-pos { font-size: .9rem; color: #62666F; min-width: 3.5rem; text-align: center; }
+
+  /* 움직임에 약한 사람을 위해, 시스템에서 움직임 줄이기를 켜 두었으면 부드럽게 미끄러지지 않게 한다. */
+  @media (prefers-reduced-motion: reduce) {
+    .track { scroll-behavior: auto; }
+  }
+
+  /* ④ 하지 않는 것 */
+  .nots {
+    list-style: none; margin: 12px 0 0; padding: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  .nots li {
+    background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 14px; padding: 16px;
+  }
+  .nots b { display: block; }
+  .nots span { display: block; font-size: .9rem; color: #62666F; }
+
+  /* ⑤ 판마다 새로 들어간 것 · ⑦ 자주 묻는 것 — 둘 다 접었다 펴는 카드다.
+     ⑤는 최신 판 하나만 펴 두고, ⑦은 모두 접어 둔다. */
+  .news { margin: 12px 0 0; padding-left: 1.1rem; color: #4A4E57; }
+  .news li { margin: 6px 0; }
+  .release, .faq {
+    background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 14px;
+    padding: 14px 18px; margin: 12px 0 0;
+  }
+  .release > summary, .faq > summary { font-weight: 600; color: #16181D; cursor: pointer; }
+  .release > .news { margin-top: 10px; }
+
+  /* 판별 블록의 한 항목 아래에 두는 `어떻게 하나요` 접기다.
+     접는 카드(`.release`) 안에 또 접는 자리라, 테두리와 배경 없이 들여쓰기만으로 구분한다.
+     `.steps-small li`는 `.news li`와 가려내는 힘이 같으므로 반드시 뒤에 적어야 한다. */
+  .how { margin: 6px 0 0; }
+  .how > summary { cursor: pointer; font-size: .9rem; color: #1F4B99; }
+  .steps-small { margin: 6px 0 0; padding-left: 1.2rem; font-size: .9rem; }
+  .steps-small li { margin: 4px 0; }
+  .faq > p:first-of-type { margin-top: 10px; }
+
+  /* ⑥ 권한 표 */
+  table { border-collapse: collapse; width: 100%; margin: 16px 0 8px; background: #FFFFFF; }
+  th, td { border: 1px solid #E4E7EC; padding: 10px 12px; text-align: left; font-size: .95rem; }
+  th { color: #16181D; font-weight: 600; white-space: nowrap; }
+  td { color: #4A4E57; }
+
+  /* ⑨ 바닥글 */
+  footer {
+    max-width: 40rem; margin: 48px auto 0; padding-top: 24px; border-top: 1px solid #E4E7EC;
+  }
+  footer p { font-size: .9rem; color: #62666F; }
+
+  /* 휴대폰 폭에서는 칸을 한 줄로 쌓는다. */
+  @media (max-width: 44rem) {
+    .steps, .nots { grid-template-columns: 1fr; }
+  }
+    </style>
+  </head>
+  <body>
+    <nav class="tabs" aria-label="Language">
+      <button type="button" data-lang="ko" aria-selected="false">한국어</button>
+      <button type="button" data-lang="en" aria-selected="false">English</button>
+      <button type="button" data-lang="ja" aria-selected="false">日本語</button>
+    </nav>
+
+    <section data-lang="ko" lang="ko" data-title="공부도장 · 사진 한 장으로 남기는 공부 기록 · 연속 일수">
+      <section id="hero-ko" class="col hero">
+        <img class="launch-logo" src="study-stamp-landing-images/launch_logo.png" width="440" height="624" alt="공부도장 도장 로고와 만든 이 표시">
+        <p class="brand">공부도장</p>
+        <h1>사진 한 장으로 남기는 공부 기록 · 연속 일수</h1>
+        <p class="lead">연속 기록이 체크 표시가 아니라, 내가 그날 찍은 사진과 공부한 시간으로 남는 앱입니다.</p>
+        <p>공부한 책을 사진으로 남기면 며칠 이어왔는지가 쌓이는 앱입니다.</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">App Store에서 받기</a>
+          <span class="price">무료</span>
+        </p>
+        <p class="note">계정도 서버도 광고도 없습니다.</p>
+        <nav class="jump" aria-label="이 페이지 안에서 이동">
+          <a href="#how-ko">어떻게 쓰나</a> ·
+          <a href="#screens-ko">화면</a> ·
+          <a href="#new-ko">새로 들어간 것</a> ·
+          <a href="#faq-ko">자주 묻는 것</a>
+        </nav>
+        <img class="hero-shot" src="study-stamp-landing-images/ko/01_home_streak.png" width="660" height="1434" alt="오늘 화면. 8일째 이어가는 중이라는 큰 숫자, 최근 7일 사진 줄, 오늘 1시간 32분과 목표 달성률 102%">
+      </section>
+
+      <section id="how-ko" class="col">
+        <h2>세 단계로 기록합니다</h2>
+        <ol class="steps">
+          <li>
+            <b>공부를 마치면 책을 사진으로 한 장 찍습니다</b>
+            <span>앱에서 바로 찍어도 되고, 앨범에 있는 사진을 골라도 됩니다</span>
+          </li>
+          <li>
+            <b>공부한 시간을 고릅니다</b>
+            <span>자주 쓰는 시간은 버튼 한 번으로 넣고, 5분이나 1분 단위로 늘리거나 줄일 수 있습니다</span>
+          </li>
+          <li>
+            <b>저장하면 연속 일수가 늘어납니다</b>
+            <span>저장하는 순간 어제 7일이던 연속 일수가 오늘 8일로 늘어납니다</span>
+          </li>
+        </ol>
+      </section>
+
+      <section id="screens-ko" class="col-wide">
+        <h2>화면으로 보는 기능</h2>
+        <div class="gallery">
+          <div class="track" tabindex="0" role="region" aria-label="앱 화면 여섯 장. 옆으로 넘겨 봅니다">
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ko/01_home_streak.png" width="660" height="1434" loading="lazy" alt="오늘 화면. 8일째 이어가는 중이라는 큰 숫자, 최근 7일 사진 줄, 오늘 1시간 32분과 목표 달성률 102%">
+                <figcaption>
+                  <h3>사진 한 장이면 오늘이 기록된다</h3>
+                  <p>앱을 열면 연속 일수가 화면에서 가장 크게 보입니다.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ko/02_calendar_photos.png" width="660" height="1434" loading="lazy" alt="달력 화면. 2026년 9월 달력의 날짜 칸마다 그날 찍은 책 사진이 들어가 있고, 아래에 9월 22일 기록 1건과 1시간 32분이 보입니다">
+                <figcaption>
+                  <h3>찍은 날이 달력에 그대로 쌓인다</h3>
+                  <p>날짜 칸마다 그날 마지막으로 찍은 사진이 들어갑니다.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ko/03_album_tiles.png" width="660" height="1434" loading="lazy" alt="앨범 화면. 2026년 9월에 찍은 사진 13장이 타일로 놓여 있고, 타일마다 그날 공부한 시간이 적혀 있습니다">
+                <figcaption>
+                  <h3>공부한 날이 한 장씩 모인다</h3>
+                  <p>앨범 화면에서는 한 달 동안 찍은 사진을 타일로 한꺼번에 볼 수 있습니다.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ko/04_stats_monthly.png" width="660" height="1434" loading="lazy" alt="월간 통계 화면. 공부한 날이 칠해진 9월 그리드, 누적 14시간 6분, 월 목표 대비 37%, 요일별 공부 시간 막대그래프">
+                <figcaption>
+                  <h3>이번 달에 얼마나 공부했는지 한눈에 본다</h3>
+                  <p>채움 그리드와 누적 시간, 요일별 그래프를 함께 보여 줍니다.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ko/05_stats_yearly.png" width="660" height="1434" loading="lazy" alt="연간 통계 화면. 2026년 누적 56시간 57분, 월별 공부 시간 막대그래프 열두 개, 달마다 한 장씩 놓인 사진">
+                <figcaption>
+                  <h3>한 해가 막대그래프 한 줄로 보인다</h3>
+                  <p>월별 그래프와 달마다 사진 한 장, 한 해 누적 시간을 보여 줍니다.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ko/06_goal_auto.png" width="660" height="1434" loading="lazy" alt="하루 목표 화면. 하루 목표 1시간 30분, 오늘과 이번 달과 올해의 진행 상황, 9월 목표가 계산된 내역">
+                <figcaption>
+                  <h3>하루 목표만 정하면 이번 달 목표는 저절로 정해진다</h3>
+                  <p>목표를 바꾸기 전에 결과가 어떻게 달라지는지 먼저 보여 줍니다.</p>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+          <div class="gallery-controls">
+            <button type="button" class="gallery-prev" aria-label="이전 화면">‹</button>
+            <span class="gallery-pos" aria-live="polite">1 / 6</span>
+            <button type="button" class="gallery-next" aria-label="다음 화면">›</button>
+          </div>
+        </div>
+        <div class="screens-cta">
+          <p class="cta">
+            <a class="store" href="https://apps.apple.com/app/id6807436972">App Store에서 받기</a>
+            <span class="price">무료</span>
+          </p>
+          <p class="note">계정도 서버도 광고도 없습니다.</p>
+        </div>
+      </section>
+
+      <section id="not-ko" class="col">
+        <h2>이 앱이 하지 않는 것</h2>
+        <ul class="nots">
+          <li>
+            <b>타이머가 없습니다</b>
+            <span>타이머를 켜고 끄는 번거로움도, 회원가입도 없습니다</span>
+          </li>
+          <li>
+            <b>권수를 세지 않습니다</b>
+            <span>며칠을 이어왔는지를 셉니다</span>
+          </li>
+          <li>
+            <b>계정이 없습니다</b>
+            <span>회원가입을 하지 않습니다. 이름도 이메일도 묻지 않습니다</span>
+          </li>
+        </ul>
+      </section>
+
+      <section id="new-ko" class="col">
+        <h2>판마다 새로 들어간 것</h2>
+        <p class="note">공부도장이 판마다 어떻게 바뀌었는지 모았습니다.</p>
+        <details class="release" open>
+          <summary>1.3.0 · 2026년 9월 10일</summary>
+          <ul class="news">
+            <li>예전에 찍어 둔 사진을 한 번에 가져올 수 있습니다.
+              <details class="how">
+                <summary>어떻게 하나요</summary>
+                <ol class="steps-small">
+                  <li>설정 탭에서 ‘사진 가져오기’를 누릅니다.</li>
+                  <li>안내를 읽고 ‘사진 고르기’를 누릅니다. 이때 앱이 사진 읽기 권한을 묻습니다. 허용하지 않아도 이 기능은 그대로 쓸 수 있습니다.</li>
+                  <li>사진 앱의 선택 화면에서 한 번에 최대 50장까지 고릅니다.</li>
+                  <li>‘모든 사진에 같게 들어갈 공부 시간’을 한 번만 입력하고 ‘다음’을 누릅니다.</li>
+                  <li>‘가져올 사진’ 목록에서 날짜를 확인하고 ‘사진 8장 가져오기’처럼 장수가 적힌 버튼을 누릅니다. 사진에 담긴 찍은 날짜로 그날의 기록이 됩니다.</li>
+                </ol>
+              </details>
+            </li>
+            <li>프로필에 사진을 넣을 수 있습니다.</li>
+            <li>프로필에서 고른 색이 화면 전체의 강조색으로 쓰입니다.</li>
+            <li>하루 목표를 오늘 화면에서 바로 정할 수 있습니다.</li>
+            <li>내보내기 카드의 모양이 바뀌었습니다.</li>
+            <li>설정에 ‘사진 권한’ 줄이 생겼습니다.</li>
+            <li>앱 글자가 조금 더 또렷해졌고, 화면 곳곳의 문구도 더 쉬운 말로 다듬었습니다.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.2.0 · 2026년 9월 9일</summary>
+          <ul class="news">
+            <li>오늘 하루를 이미지 한 장으로 내보낼 수 있습니다.</li>
+            <li>만든 이미지는 SNS에 올리거나 사진 앱에 저장할 수 있습니다.</li>
+            <li>보내기 전에 미리보기로 확인할 수 있습니다.</li>
+            <li>이미지에는 프로필 이름이 들어가지 않습니다.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.1.0 · 2026년 9월 7일</summary>
+          <ul class="news">
+            <li>공부 시간을 1분 단위로도 맞출 수 있습니다.</li>
+            <li>영어와 일본어를 지원합니다.</li>
+            <li>설정에 ‘카메라 권한’ 줄이 생겼습니다.</li>
+            <li>설정에 ‘앱 리뷰 쓰기’ 줄이 생겼습니다.</li>
+            <li>기록 화면의 −/+ 버튼을 더 쉽게 누를 수 있습니다.</li>
+            <li>‘오늘의 기록’ 맨 끝에 있는 + 칸에서 시작한 기록이 오늘이 아니라 사진을 찍은 날짜로 저장되던 문제를 고쳤습니다.</li>
+            <li>화면 곳곳의 문구를 더 쉬운 말로 다듬었습니다.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.0.0 · 2026년 9월 3일 · 첫 출시</summary>
+          <ul class="news">
+            <li>사진 한 장과 공부 시간으로 하루를 기록합니다.</li>
+            <li>달력과 앨범, 월간 통계와 연간 통계로 기록을 볼 수 있습니다.</li>
+            <li>하루 목표 하나만 정하면 이번 달과 올해 목표가 자동으로 계산됩니다.</li>
+            <li>한 달이 끝나면 그달에 대한 짧은 글을 남길 수 있습니다.</li>
+            <li>아이폰 한 대에서 세 명까지 각자 기록할 수 있습니다.</li>
+            <li>지난 날짜에도 기록을 더할 수 있습니다.</li>
+          </ul>
+        </details>
+        <p class="note"><a href="#hero-ko">맨 위로</a></p>
+      </section>
+
+      <section id="privacy-ko" class="col">
+        <h2>개인정보와 권한</h2>
+        <p>계정도 서버도 없습니다. 기록과 사진은 이 기기 안에만 있고, 앱은 그것을 어디로도 보내지 않습니다.</p>
+        <p>사진은 앱이 복사해 보관합니다. 사진 앱에서 원본을 지워도 기록은 남습니다.</p>
+        <table>
+          <thead>
+            <tr><th>권한</th><th>언제 묻나요</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>카메라</td><td>공부한 책을 찍을 때만 씁니다</td></tr>
+            <tr><td>사진 추가</td><td>만든 이미지를 사진 앱에 저장할 때만 씁니다</td></tr>
+            <tr><td>사진 읽기</td><td>기록으로 가져오는 사진의 찍은 날짜를 읽을 때만 씁니다</td></tr>
+          </tbody>
+        </table>
+        <p class="note">허용하지 않아도 앱을 쓸 수 있습니다.</p>
+        <p><a href="https://purple-lamp-236.github.io/study-stamp-privacy/#ko">개인정보 처리방침과 이용 약관</a>에 자세히 적어 두었습니다.</p>
+      </section>
+
+      <section id="faq-ko" class="col">
+        <h2>자주 묻는 것</h2>
+
+        <details class="faq">
+          <summary>공부 시간을 앱이 재 주나요?</summary>
+          <p>아닙니다. 시간은 직접 고릅니다. 타이머가 없습니다.</p>
+          <p>자주 쓰는 시간은 버튼 한 번으로 넣고, 5분이나 1분 단위로 늘리거나 줄일 수 있습니다.</p>
+        </details>
+
+        <details class="faq">
+          <summary>연속 기록은 어떻게 세나요?</summary>
+          <p>하루에 한 건이라도 기록하면 그날은 이어진 것으로 봅니다.</p>
+          <p>공부한 시간이 목표에 못 미쳐도 연속은 끊기지 않습니다.</p>
+        </details>
+
+        <details class="faq">
+          <summary>기록이 백업되나요?</summary>
+          <p>앱 안에는 백업 기능이 없습니다.</p>
+          <p>다만 아이폰의 iCloud 백업을 켜 두었다면 기록과 사진이 그 백업에 함께 담깁니다.</p>
+          <p>그래서 새 아이폰으로 옮길 때 기록이 따라옵니다.</p>
+          <p>백업을 꺼 두었다면 앱을 지우거나 기기를 잃어버릴 때 기록을 되살릴 수 없습니다.</p>
+        </details>
+
+        <details class="faq">
+          <summary>한 아이폰을 여러 사람이 쓸 수 있나요?</summary>
+          <p>최대 세 명까지 각자 기록할 수 있습니다.</p>
+          <p>화면 오른쪽 위의 프로필을 눌러 바로 바꿉니다. 설정 탭에서 언제든 더할 수 있습니다.</p>
+        </details>
+
+        <p class="note">나머지 질문은 <a href="https://purple-lamp-236.github.io/study-stamp-support/#ko">지원 페이지</a>에 있습니다.</p>
+      </section>
+
+      <section id="download-ko" class="col">
+        <h2>다운로드</h2>
+        <p>매일 책으로 공부하고 그 흔적을 남기고 싶은 분, 수험생과 자격증 준비생, 꾸준히 책을 읽는 분을 생각하며 만들었습니다.</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">App Store에서 받기</a>
+          <span class="price">무료</span>
+        </p>
+        <p class="note">iOS 17.0 이상 · 아이폰 전용 · 세로 화면</p>
+      </section>
+
+      <footer id="footer-ko">
+        <p>
+          <a href="https://purple-lamp-236.github.io/study-stamp-support/#ko">지원</a> ·
+          <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#ko">개인정보 처리방침과 이용 약관</a>
+        </p>
+        <p>문의 <a href="mailto:purple.lamp.236@gmail.com">purple.lamp.236@gmail.com</a></p>
+        <p>PURPLE LAMP</p>
+      </footer>
+    </section>
+
+    <section data-lang="en" lang="en" data-title="StudyStamp · Study streak, one photo a day">
+      <section id="hero-en" class="col hero">
+        <img class="launch-logo" src="study-stamp-landing-images/launch_logo.png" width="440" height="624" alt="The StudyStamp stamp logo and the maker's mark">
+        <p class="brand">StudyStamp</p>
+        <h1>Study streak, one photo a day</h1>
+        <p class="lead">An app where your streak isn't a checkmark. It's the photo you took that day and the time you studied.</p>
+        <p>An app that keeps count of how many days in a row you've studied, one photo of your book at a time.</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
+          <span class="price">Free</span>
+        </p>
+        <p class="note">No account, no server, no ads.</p>
+        <nav class="jump" aria-label="Jump to a section on this page">
+          <a href="#how-en">How it works</a> ·
+          <a href="#screens-en">Screens</a> ·
+          <a href="#new-en">What's new</a> ·
+          <a href="#faq-en">FAQ</a>
+        </nav>
+        <img class="hero-shot" src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
+      </section>
+
+      <section id="how-en" class="col">
+        <h2>Three steps to a record</h2>
+        <ol class="steps">
+          <li>
+            <b>When you finish studying, take one photo of your book</b>
+            <span>Take it in the app, or pick a photo from your album</span>
+          </li>
+          <li>
+            <b>Pick the time you studied</b>
+            <span>Common durations are one tap away, and you can adjust in 5-minute or 1-minute steps</span>
+          </li>
+          <li>
+            <b>Save it, and your streak grows</b>
+            <span>The moment you save, yesterday's 7-day streak becomes today's 8</span>
+          </li>
+        </ol>
+      </section>
+
+      <section id="screens-en" class="col-wide">
+        <h2>A look at the screens</h2>
+        <div class="gallery">
+          <div class="track" tabindex="0" role="region" aria-label="Six app screens. Swipe sideways to see them">
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" loading="lazy" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
+                <figcaption>
+                  <h3>One photo records your day</h3>
+                  <p>Your streak is the biggest thing on screen when you open the app.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/02_calendar_photos.png" width="660" height="1434" loading="lazy" alt="Calendar screen: a September 2026 calendar where each day shows that day's photo, with one record of 1 hour 32 minutes below">
+                <figcaption>
+                  <h3>The days you shot stack up on the calendar</h3>
+                  <p>Each day shows the last photo you took that day.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/03_album_tiles.png" width="660" height="1434" loading="lazy" alt="Album screen: 13 photos taken in September 2026 laid out as tiles, each tile labeled with the study time for that day">
+                <figcaption>
+                  <h3>Every study day, one photo at a time</h3>
+                  <p>The Album tab lays out a month of photos as tiles.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/04_stats_monthly.png" width="660" height="1434" loading="lazy" alt="Monthly stats screen: a grid of filled-in study days, a total of 14 hours 6 minutes, and a chart of study time by weekday">
+                <figcaption>
+                  <h3>How much did you study this month? See it at a glance</h3>
+                  <p>It shows a filled-in grid, your total time, and a chart by weekday.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/05_stats_yearly.png" width="660" height="1434" loading="lazy" alt="Yearly stats screen: a 2026 total of 56 hours 57 minutes, a bar chart by month, and one photo for each month">
+                <figcaption>
+                  <h3>A whole year in one row of bars</h3>
+                  <p>It shows a chart by month, one photo for each month, and the year's total.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/06_goal_auto.png" width="660" height="1434" loading="lazy" alt="Daily goal screen: a daily goal of 1 hour 30 minutes, progress for today and this month, and how the month's goal adds up">
+                <figcaption>
+                  <h3>Set one daily goal. The month's goal follows</h3>
+                  <p>Before you change a goal, see how the results would change.</p>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+          <div class="gallery-controls">
+            <button type="button" class="gallery-prev" aria-label="Previous screen">‹</button>
+            <span class="gallery-pos" aria-live="polite">1 / 6</span>
+            <button type="button" class="gallery-next" aria-label="Next screen">›</button>
+          </div>
+        </div>
+        <div class="screens-cta">
+          <p class="cta">
+            <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
+            <span class="price">Free</span>
+          </p>
+          <p class="note">No account, no server, no ads.</p>
+        </div>
+      </section>
+
+      <section id="not-en" class="col">
+        <h2>What this app doesn't do</h2>
+        <ul class="nots">
+          <li>
+            <b>There is no timer</b>
+            <span>No timer to start and stop. No sign-up</span>
+          </li>
+          <li>
+            <b>It doesn't count books</b>
+            <span>It counts how many days you've kept going</span>
+          </li>
+          <li>
+            <b>There is no account</b>
+            <span>No sign-up. We never ask for your name or email</span>
+          </li>
+        </ul>
+      </section>
+
+      <section id="new-en" class="col">
+        <h2>What's new in each version</h2>
+        <p class="note">A look at how StudyStamp has changed from version to version.</p>
+        <details class="release" open>
+          <summary>1.3.0 · September 10, 2026</summary>
+          <ul class="news">
+            <li>Import photos you already have.
+              <details class="how">
+                <summary>How it works</summary>
+                <ol class="steps-small">
+                  <li>In the Settings tab, tap “Import Photos”.</li>
+                  <li>Read the notes and tap “Choose Photos”. The app asks for photo library access at this point. You can still use the feature if you decline.</li>
+                  <li>Pick up to 50 photos at once in the iOS photo picker.</li>
+                  <li>Enter the study time once under “Same study time for every photo”, then tap “Next”.</li>
+                  <li>Check the dates under “Will be imported”, then tap the button that shows the count, such as “Import 8 Photos”. Each photo becomes a record on the day it was taken.</li>
+                </ol>
+              </details>
+            </li>
+            <li>Add a photo to your profile.</li>
+            <li>The color you pick for a profile is used as the accent color across the whole screen.</li>
+            <li>Set your daily goal right from the Today screen.</li>
+            <li>The export card has a new look.</li>
+            <li>A new Photos access row in Settings shows the current status and takes you straight to iOS Settings.</li>
+            <li>Text across the app is a little easier to read, and wording in several places is clearer.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.2.0 · September 9, 2026</summary>
+          <ul class="news">
+            <li>Turn today into a single image.</li>
+            <li>Post it wherever you like, or save it to Photos.</li>
+            <li>A preview shows you the image before you send it.</li>
+            <li>Profile names never go into the image — only your photos and your Progress note.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.1.0 · September 7, 2026</summary>
+          <ul class="news">
+            <li>Set study time in 1-minute steps.</li>
+            <li>English and Japanese are now supported.</li>
+            <li>A new Camera Access row in Settings shows the current status and takes you straight to iOS Settings.</li>
+            <li>A new Write a Review row in Settings.</li>
+            <li>The −/+ buttons on the record screen are easier to tap.</li>
+            <li>Fixed an issue where a record started from the + tile at the end of Today's Records was saved to the photo's capture date instead of today.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.0.0 · September 3, 2026 · First release</summary>
+          <ul class="news">
+            <li>One photo and your study time make a day's record.</li>
+            <li>See your records as a calendar, an album, monthly stats, and yearly stats.</li>
+            <li>Set one daily goal, and the goals for this month and this year are calculated for you.</li>
+            <li>When a month ends, leave a short recap of it.</li>
+            <li>Up to three people keep their own records on one iPhone.</li>
+            <li>Add records to past days, too.</li>
+          </ul>
+        </details>
+        <p class="note"><a href="#hero-en">Back to top</a></p>
+      </section>
+
+      <section id="privacy-en" class="col">
+        <h2>Privacy and permissions</h2>
+        <p>No account, no server. Your records and photos stay on this device. The app sends nothing anywhere.</p>
+        <p>The app keeps its own copy of the photo. Deleting the original from Photos does not remove the record.</p>
+        <table>
+          <thead>
+            <tr><th>Permission</th><th>When it is asked for</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Camera</td><td>Used only to photograph the book you studied</td></tr>
+            <tr><td>Adding photos</td><td>Used only to save the image you made to your Photos app</td></tr>
+            <tr><td>Reading photos</td><td>Used only to read the capture dates of the photos you import as records</td></tr>
+          </tbody>
+        </table>
+        <p class="note">You can use the app without granting them.</p>
+        <p>See the <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#en">Privacy Policy &amp; Terms of Use</a> for details.</p>
+      </section>
+
+      <section id="faq-en" class="col">
+        <h2>Frequently asked questions</h2>
+
+        <details class="faq">
+          <summary>Does the app time my study sessions?</summary>
+          <p>No. You choose the time yourself. There is no timer.</p>
+          <p>Common durations are one tap away, and you can adjust in 5-minute or 1-minute steps.</p>
+        </details>
+
+        <details class="faq">
+          <summary>How is the streak counted?</summary>
+          <p>Even one record in a day keeps the streak going.</p>
+          <p>Falling short of your goal does not break the streak.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Are my records backed up?</summary>
+          <p>There is no backup feature inside the app.</p>
+          <p>However, if iCloud Backup is on for your iPhone, your records and photos are included in that backup.</p>
+          <p>So your records come along when you move to a new iPhone.</p>
+          <p>With backup off, records cannot be recovered if you delete the app or lose your device.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Can several people use one iPhone?</summary>
+          <p>Up to three people can keep their own records.</p>
+          <p>Tap the profile at the top right to switch. You can add people any time from the Settings tab.</p>
+        </details>
+
+        <p class="note">The remaining questions are on the <a href="https://purple-lamp-236.github.io/study-stamp-support/#en">support page</a>.</p>
+      </section>
+
+      <section id="download-en" class="col">
+        <h2>Download</h2>
+        <p>Made for people who study with books every day and want to keep a trace of it: exam candidates, people preparing for certifications, and steady readers.</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
+          <span class="price">Free</span>
+        </p>
+        <p class="note">iOS 17.0 or later · iPhone only · Portrait</p>
+      </section>
+
+      <footer id="footer-en">
+        <p>
+          <a href="https://purple-lamp-236.github.io/study-stamp-support/#en">Support</a> ·
+          <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#en">Privacy Policy &amp; Terms of Use</a>
+        </p>
+        <p>Contact <a href="mailto:purple.lamp.236@gmail.com">purple.lamp.236@gmail.com</a></p>
+        <p>PURPLE LAMP</p>
+      </footer>
+    </section>
+
+    <section data-lang="ja" lang="ja" data-title="勉強スタンプ · 写真1枚で残す勉強記録・連続日数">
+      <section id="hero-ja" class="col hero">
+        <img class="launch-logo" src="study-stamp-landing-images/launch_logo.png" width="440" height="624" alt="勉強スタンプのスタンプロゴと制作者の表示">
+        <p class="brand">勉強スタンプ</p>
+        <h1>写真1枚で残す勉強記録・連続日数</h1>
+        <p class="lead">連続記録がチェックマークではなく、その日に撮った写真と勉強した時間で残るアプリです。</p>
+        <p>勉強した本を写真で残すと、何日続けてきたかが積み上がっていくアプリです。</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">App Storeで入手</a>
+          <span class="price">無料</span>
+        </p>
+        <p class="note">アカウントもサーバーも広告もありません。</p>
+        <nav class="jump" aria-label="このページ内を移動">
+          <a href="#how-ja">使い方</a> ·
+          <a href="#screens-ja">画面</a> ·
+          <a href="#new-ja">新機能</a> ·
+          <a href="#faq-ja">よくある質問</a>
+        </nav>
+        <img class="hero-shot" src="study-stamp-landing-images/ja/01_home_streak.png" width="660" height="1434" alt="「今日」画面。8日目という大きな数字、直近7日の写真の列、今日の1時間32分と目標達成率102%">
+      </section>
+
+      <section id="how-ja" class="col">
+        <h2>3ステップで記録します</h2>
+        <ol class="steps">
+          <li>
+            <b>勉強を終えたら、本を写真で1枚撮ります</b>
+            <span>アプリで撮ってもいいですし、アルバムにある写真を選んでもかまいません</span>
+          </li>
+          <li>
+            <b>勉強した時間を選びます</b>
+            <span>よく使う時間はボタン一つで入れられ、5分または1分単位で増減できます</span>
+          </li>
+          <li>
+            <b>保存すると連続日数が増えます</b>
+            <span>保存した瞬間に、昨日まで7日だった連続日数が今日の8日に増えます</span>
+          </li>
+        </ol>
+      </section>
+
+      <section id="screens-ja" class="col-wide">
+        <h2>画面で見る機能</h2>
+        <div class="gallery">
+          <div class="track" tabindex="0" role="region" aria-label="アプリの画面6枚。横にスワイプして見ます">
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ja/01_home_streak.png" width="660" height="1434" loading="lazy" alt="「今日」画面。8日目という大きな数字、直近7日の写真の列、今日の1時間32分と目標達成率102%">
+                <figcaption>
+                  <h3>写真1枚で今日が記録される</h3>
+                  <p>アプリを開くと、連続日数がいちばん大きく表示されます。</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ja/02_calendar_photos.png" width="660" height="1434" loading="lazy" alt="カレンダー画面。2026年9月のカレンダーの日付ごとにその日の写真が入り、下に9月22日の記録1件と1時間32分が表示されています">
+                <figcaption>
+                  <h3>撮った日がカレンダーにたまる</h3>
+                  <p>日付のマスごとに、その日に最後に撮った写真が入ります。</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ja/03_album_tiles.png" width="660" height="1434" loading="lazy" alt="アルバム画面。2026年9月に撮った写真13枚がタイルで並び、タイルごとにその日の勉強時間が表示されています">
+                <figcaption>
+                  <h3>勉強した日が1枚ずつ集まる</h3>
+                  <p>アルバム画面では、1か月分の写真をタイルで一覧できます。</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ja/04_stats_monthly.png" width="660" height="1434" loading="lazy" alt="月間統計画面。勉強した日が塗られた9月のグリッド、累計14時間6分、月間目標の37%、曜日別の勉強時間グラフ">
+                <figcaption>
+                  <h3>今月どれだけ勉強したかひと目でわかる</h3>
+                  <p>塗りつぶしグリッドと累計時間、曜日別グラフをまとめて表示します。</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ja/05_stats_yearly.png" width="660" height="1434" loading="lazy" alt="年間統計画面。2026年の累計56時間57分、月別の勉強時間の棒グラフ12本、月ごとに1枚ずつ並ぶ写真">
+                <figcaption>
+                  <h3>1年が棒グラフ1列で見える</h3>
+                  <p>月別グラフと月ごとの写真1枚、1年の累計時間を表示します。</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/ja/06_goal_auto.png" width="660" height="1434" loading="lazy" alt="1日の目標画面。1日の目標1時間30分、今日と今月と今年の進み具合、9月の目標が計算された内訳">
+                <figcaption>
+                  <h3>1日の目標を決めれば今月の目標は自動で決まる</h3>
+                  <p>目標を変える前に、結果がどう変わるかを先に確認できます。</p>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+          <div class="gallery-controls">
+            <button type="button" class="gallery-prev" aria-label="前の画面">‹</button>
+            <span class="gallery-pos" aria-live="polite">1 / 6</span>
+            <button type="button" class="gallery-next" aria-label="次の画面">›</button>
+          </div>
+        </div>
+        <div class="screens-cta">
+          <p class="cta">
+            <a class="store" href="https://apps.apple.com/app/id6807436972">App Storeで入手</a>
+            <span class="price">無料</span>
+          </p>
+          <p class="note">アカウントもサーバーも広告もありません。</p>
+        </div>
+      </section>
+
+      <section id="not-ja" class="col">
+        <h2>このアプリがしないこと</h2>
+        <ul class="nots">
+          <li>
+            <b>タイマーはありません</b>
+            <span>タイマーをつけたり止めたりする手間も、会員登録もありません</span>
+          </li>
+          <li>
+            <b>冊数は数えません</b>
+            <span>何日続けてきたかを数えます</span>
+          </li>
+          <li>
+            <b>アカウントはありません</b>
+            <span>会員登録はありません。名前もメールアドレスも聞きません</span>
+          </li>
+        </ul>
+      </section>
+
+      <section id="new-ja" class="col">
+        <h2>版ごとの新機能</h2>
+        <p class="note">勉強スタンプが版ごとにどう変わってきたかをまとめました。</p>
+        <details class="release" open>
+          <summary>1.3.0 · 2026年9月10日</summary>
+          <ul class="news">
+            <li>前に撮っておいた写真をまとめて取り込めます。
+              <details class="how">
+                <summary>使い方</summary>
+                <ol class="steps-small">
+                  <li>「設定」タブで「写真を取り込む」を押します。</li>
+                  <li>案内を読んで「写真を選ぶ」を押します。このとき写真へのアクセス許可を聞かれます。許可しなくても、この機能はそのまま使えます。</li>
+                  <li>iOSの写真選択画面で、一度に最大50枚まで選びます。</li>
+                  <li>「すべての写真に同じように入る勉強時間」を一度だけ入力して「次へ」を押します。</li>
+                  <li>「取り込む写真」で日付を確かめて、「写真8枚を取り込む」のように枚数が書かれたボタンを押します。写真に入っている撮影日で、その日の記録になります。</li>
+                </ol>
+              </details>
+            </li>
+            <li>プロフィールに写真を入れられます。</li>
+            <li>プロフィールで選んだ色が、画面全体のアクセント色として使われます。</li>
+            <li>1日の目標を「今日」画面から直接決められます。</li>
+            <li>シェア画像のデザインが変わりました。</li>
+            <li>設定に「写真の権限」の行が加わりました。</li>
+            <li>アプリの文字が少し読みやすくなり、画面の文言もわかりやすく整えました。</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.2.0 · 2026年9月9日</summary>
+          <ul class="news">
+            <li>今日の記録を1枚の画像にできます。</li>
+            <li>作った画像はSNSに投稿したり、写真アプリに保存したりできます。</li>
+            <li>送る前にプレビューで確認できます。</li>
+            <li>画像にプロフィール名は入りません。</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.1.0 · 2026年9月7日</summary>
+          <ul class="news">
+            <li>勉強時間を1分単位でも合わせられるようになりました。</li>
+            <li>英語と日本語に対応しました。</li>
+            <li>設定に「カメラの権限」の行が加わりました。</li>
+            <li>設定に「レビューを書く」の行が加わりました。</li>
+            <li>記録画面の −/+ ボタンが押しやすくなりました。</li>
+            <li>「今日の記録」の末尾にある + のマスから記録を始めると、今日ではなく写真の撮影日で保存される問題を修正しました。</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.0.0 · 2026年9月3日 · 初回リリース</summary>
+          <ul class="news">
+            <li>写真1枚と勉強時間で1日を記録します。</li>
+            <li>カレンダーとアルバム、月間統計と年間統計で記録を見られます。</li>
+            <li>1日の目標をひとつ決めると、今月と今年の目標が自動で計算されます。</li>
+            <li>月が終わったら、その月についての短いふりかえりを残せます。</li>
+            <li>1台のiPhoneで3人まで、それぞれ記録できます。</li>
+            <li>過去の日付にも記録を追加できます。</li>
+          </ul>
+        </details>
+        <p class="note"><a href="#hero-ja">ページの先頭へ</a></p>
+      </section>
+
+      <section id="privacy-ja" class="col">
+        <h2>個人情報と権限</h2>
+        <p>アカウントもサーバーもありません。記録と写真はこの端末の中にあり、アプリはどこにも送信しません。</p>
+        <p>写真はアプリがコピーして保管します。写真アプリで元の写真を削除しても記録は残ります。</p>
+        <table>
+          <thead>
+            <tr><th>権限</th><th>いつ聞かれるか</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>カメラ</td><td>勉強した本を撮るときにだけ使います</td></tr>
+            <tr><td>写真の追加</td><td>作成した画像を写真アプリに保存するときにだけ使います</td></tr>
+            <tr><td>写真の読み取り</td><td>記録として取り込む写真の撮影日を読み取るときにだけ使います</td></tr>
+          </tbody>
+        </table>
+        <p class="note">許可しなくてもアプリは使えます。</p>
+        <p>詳しくは<a href="https://purple-lamp-236.github.io/study-stamp-privacy/#ja">プライバシーポリシー · 利用規約</a>に記載しています。</p>
+      </section>
+
+      <section id="faq-ja" class="col">
+        <h2>よくある質問</h2>
+
+        <details class="faq">
+          <summary>勉強時間はアプリが計ってくれますか？</summary>
+          <p>いいえ。時間は自分で選びます。タイマーはありません。</p>
+          <p>よく使う時間はボタン一つで入れられ、5分または1分単位で増減できます。</p>
+        </details>
+
+        <details class="faq">
+          <summary>連続記録はどのように数えますか？</summary>
+          <p>1日に1件でも記録すれば、その日は続いたものと見なします。</p>
+          <p>勉強時間が目標に届かなくても、連続は途切れません。</p>
+        </details>
+
+        <details class="faq">
+          <summary>記録はバックアップされますか？</summary>
+          <p>アプリの中にバックアップ機能はありません。</p>
+          <p>ただし、iPhoneのiCloudバックアップをオンにしていれば、記録と写真はそのバックアップに含まれます。</p>
+          <p>そのため、新しいiPhoneに移すときに記録も引き継がれます。</p>
+          <p>バックアップをオフにしていると、アプリを削除したり端末を失くしたりしたときに記録を復元できません。</p>
+        </details>
+
+        <details class="faq">
+          <summary>1台のiPhoneを複数の人で使えますか？</summary>
+          <p>最大3人まで、それぞれ記録できます。</p>
+          <p>画面右上のプロフィールを押してすぐに切り替えられます。設定タブからいつでも追加できます。</p>
+        </details>
+
+        <p class="note">残りの質問は<a href="https://purple-lamp-236.github.io/study-stamp-support/#ja">サポートページ</a>にあります。</p>
+      </section>
+
+      <section id="download-ja" class="col">
+        <h2>ダウンロード</h2>
+        <p>毎日本で勉強してその足跡を残したい方、受験生や資格試験の準備をしている方、こつこつ本を読む方を思って作りました。</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">App Storeで入手</a>
+          <span class="price">無料</span>
+        </p>
+        <p class="note">iOS 17.0以上 · iPhone専用 · 縦画面</p>
+      </section>
+
+      <footer id="footer-ja">
+        <p>
+          <a href="https://purple-lamp-236.github.io/study-stamp-support/#ja">サポート</a> ·
+          <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#ja">プライバシーポリシー · 利用規約</a>
+        </p>
+        <p>お問い合わせ <a href="mailto:purple.lamp.236@gmail.com">purple.lamp.236@gmail.com</a></p>
+        <p>PURPLE LAMP</p>
+      </footer>
+    </section>
+
+    <script>
+      (function () {
+        var languages = ["ko", "en", "ja"];
+        document.documentElement.classList.add("js");
+        // 해시에서 언어를 읽는다. `#ko`처럼 언어 코드만 있는 것과
+        // `#new-ko`처럼 섹션 id 끝에 언어가 붙은 것을 모두 본다.
+        function langFromHash() {
+          var hash = location.hash.replace("#", "");
+          if (languages.indexOf(hash) >= 0) { return hash; }
+          for (var i = 0; i < languages.length; i += 1) {
+            var suffix = "-" + languages[i];
+            if (hash.length > suffix.length && hash.slice(-suffix.length) === suffix) {
+              return languages[i];
+            }
+          }
+          return null;
+        }
+        // 해시에 언어가 없으면 지금 보이는 언어를 그대로 둔다. 그것도 없으면 영어로 연다.
+        function preferred() {
+          var fromHash = langFromHash();
+          if (fromHash) { return fromHash; }
+          var current = document.documentElement.lang;
+          return languages.indexOf(current) >= 0 ? current : "en";
+        }
+        function show(code) {
+          document.documentElement.lang = code;
+          document.querySelectorAll("section[data-lang]").forEach(function (section) {
+            section.hidden = section.getAttribute("data-lang") !== code;
+          });
+          document.querySelectorAll(".tabs button").forEach(function (button) {
+            button.setAttribute("aria-selected", button.getAttribute("data-lang") === code ? "true" : "false");
+          });
+          // 탭 제목은 그 언어 섹션의 `data-title` 값으로 정한다.
+          // h1에는 앱 이름이 아니라 무슨 앱인지 말하는 문장이 들어 있어서, 그대로 쓰면 앱 이름이 빠진다.
+          // `data-title`을 적어 두지 않은 섹션이 있으면 예전처럼 h1 글자를 쓴다.
+          var section = document.querySelector('section[data-lang="' + code + '"]');
+          if (section) {
+            var title = section.getAttribute("data-title");
+            if (!title) {
+              var heading = section.querySelector("h1");
+              if (heading) { title = heading.textContent; }
+            }
+            if (title) { document.title = title; }
+          }
+          // 방금 보이게 된 언어의 슬라이드는 그전까지 폭이 0이라 위치를 셀 수 없었다. 이제 다시 센다.
+          refreshGalleries();
+        }
+
+        // ③ 화면 슬라이드 — 이전 · 다음 버튼과 `n / 6` 위치 표시를 맡는다.
+        // 넘기는 일 자체는 CSS의 스크롤 스냅이 하므로, 이 스크립트가 없어도 슬라이드는 넘어간다.
+        // 방향키도 가로채지 않는다. `.track`에 `tabindex="0"`이 있어서 브라우저가 알아서 넘겨 준다.
+        var galleries = [];
+        function setUpGallery(gallery) {
+          var track = gallery.querySelector(".track");
+          var slides = gallery.querySelectorAll(".slide");
+          var position = gallery.querySelector(".gallery-pos");
+          var previous = gallery.querySelector(".gallery-prev");
+          var next = gallery.querySelector(".gallery-next");
+          if (!track || slides.length === 0) { return null; }
+          // 버튼 한 번에 옮길 거리다. 슬라이드 한 장이 트랙 폭을 그대로 차지하므로
+          // 트랙의 폭이 곧 한 장의 폭이고, 한 번 누르면 정확히 한 장만 넘어간다.
+          function step() {
+            return track.clientWidth;
+          }
+          // 지금 몇 번째 장에 서 있는지 적고, 양 끝에서는 그쪽 버튼을 누르지 못하게 한다.
+          // 번호는 옆으로 밀려난 거리를 트랙 폭으로 나눠 구한다.
+          function refresh() {
+            // 숨어 있는 언어 묶음은 폭이 0이라 나눗셈이 성립하지 않는다. 그때는 손대지 않는다.
+            if (track.clientWidth === 0) { return; }
+            var index = Math.round(track.scrollLeft / track.clientWidth);
+            if (index < 0) { index = 0; }
+            if (index > slides.length - 1) { index = slides.length - 1; }
+            if (position) { position.textContent = (index + 1) + " / " + slides.length; }
+            var remaining = track.scrollWidth - track.clientWidth - track.scrollLeft;
+            // 1px은 브라우저가 소수점으로 계산한 값이 딱 떨어지지 않는 것을 감안한 여유다.
+            if (previous) { previous.disabled = track.scrollLeft <= 1; }
+            if (next) { next.disabled = remaining <= 1; }
+          }
+          // 스크롤은 아주 잦게 일어난다. 화면을 다시 그리는 시점에 한 번만 세도록 묶는다.
+          var waiting = false;
+          track.addEventListener("scroll", function () {
+            if (waiting) { return; }
+            waiting = true;
+            requestAnimationFrame(function () {
+              waiting = false;
+              refresh();
+            });
+          });
+          if (previous) {
+            previous.addEventListener("click", function () { track.scrollBy({ left: -step() }); });
+          }
+          if (next) {
+            next.addEventListener("click", function () { track.scrollBy({ left: step() }); });
+          }
+          refresh();
+          return refresh;
+        }
+        function refreshGalleries() {
+          galleries.forEach(function (refresh) { refresh(); });
+        }
+        document.querySelectorAll(".gallery").forEach(function (gallery) {
+          var refresh = setUpGallery(gallery);
+          if (refresh) { galleries.push(refresh); }
+        });
+
+        document.querySelectorAll(".tabs button").forEach(function (button) {
+          button.addEventListener("click", function () {
+            var code = button.getAttribute("data-lang");
+            history.replaceState(null, "", "#" + code);
+            show(code);
+          });
+        });
+        // 해시가 `#new-ko`처럼 섹션 id면 그 자리로 옮긴다.
+        // 숨어 있던 섹션은 브라우저가 자리를 찾지 못하므로, 보인 다음에 직접 옮긴다.
+        function scrollToHash() {
+          if (location.hash.length <= 1) { return; }
+          var target = document.getElementById(location.hash.slice(1));
+          if (target) { target.scrollIntoView(); }
+        }
+        window.addEventListener("hashchange", function () {
+          var code = langFromHash();
+          // 언어가 그대로면 아무것도 하지 않는다. 그 id로 옮기는 일은 브라우저가 한다.
+          if (code && code !== document.documentElement.lang) {
+            show(code);
+            scrollToHash();
+          }
+        });
+        show(preferred());
+        scrollToHash();
+        // 그림이 모두 실리면 페이지 높이가 확정된다. 그 뒤에 한 번 더 맞춘다.
+        // 그 사이에 읽는 사람이 스스로 움직였으면 건드리지 않는다.
+        var scrolledTo = Math.round(window.scrollY);
+        window.addEventListener("load", function () {
+          if (Math.round(window.scrollY) === scrolledTo) { scrollToHash(); }
+        });
+      })();
+    </script>
+  </body>
+</html>
