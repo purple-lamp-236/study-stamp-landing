@@ -2,6 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <!-- 화면 모드를 스타일보다 먼저 정한다. 그래야 다크로 열 때 페이지가 한 번 밝게 번쩍이지 않는다. -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("theme");
+          if (saved === "light" || saved === "dark") {
+            document.documentElement.setAttribute("data-theme", saved);
+          }
+        } catch (error) {
+          // 저장을 막아 둔 브라우저에서는 기기 설정을 그대로 따른다.
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>StudyStamp · Study streak, one photo a day</title>
     <meta name="description" content="StudyStamp is a free iPhone app that keeps your study streak from one photo of your book and the study time you enter yourself. No timer, no account, no ads.">
@@ -9,7 +22,8 @@
       앱을 소개하는 랜딩 페이지다. 기준이 되는 판은 1.3.0(빌드 54)이다.
       담을 것은 `05_release/landing_page_plan.md`에 정해져 있다. 섹션 ①~⑨의 순서를 그대로 따른다.
 
-      **한 장에 한국어 · 영어 · 일본어가 모두 들어 있다.** 위쪽 탭으로 바꿔 본다.
+      **한 장에 영어 · 한국어 · 일본어가 모두 들어 있다.** 위쪽 탭으로 바꿔 본다.
+      탭과 언어 묶음의 순서는 **영어 · 한국어 · 일본어**다 (2026년 9월 19일 사용자 결정).
       처음 열 때는 **영어**를 보여 준다. 주소 뒤에 `#ko` · `#ja`를 붙이면 그 언어로 열린다.
       세 언어 묶음(`<section data-lang>`)의 내용은 서로 같아야 한다. 한 언어를 고치면 셋을 함께 고친다.
       탭의 모양과 동작 · 색 · 글꼴은 지원 페이지 · 방침 페이지와 같은 값을 쓴다.
@@ -35,13 +49,82 @@
       항목 안에 들어 있는 `어떻게 하나요` 접기(`.how`)는 이 규칙과 별개이고 **언제나 접어 둔다.**
       (근거는 `05_release/landing_page_version_history_plan.md`)
 
+      **색은 `:root`의 변수로 모아 두었고, 라이트 · 다크 두 벌이 있다.**
+      오른쪽 위 해 · 달 버튼으로 바꾸고, 고른 값은 `localStorage`의 `theme` 자리에 남는다.
+      고른 적이 없으면 기기 설정을 따른다. 지원 페이지 · 방침 페이지도 같은 방식이다.
+
       외부 자원을 전혀 쓰지 않는다. 글꼴 · 스크립트 · 분석 도구를 밖에서 받아오지 않는다.
+      해 · 달 아이콘도 밖에서 받아오지 않고 인라인 SVG로 그린다.
     -->
     <style>
-  :root { color-scheme: light; }
+  /* 색은 모두 이름 붙인 변수에 모아 두었다. 기본값은 라이트다.
+     기기가 다크로 맞춰져 있으면 `@media (prefers-color-scheme: dark)`가 값을 바꾸고,
+     읽는 사람이 오른쪽 위 버튼으로 고르면 `html[data-theme="…"]`가 그 값을 강제한다.
+     다크 값은 03_visual_design/design_tokens.md 「앱 화면의 색 열셋」의 `다크` 열에서 가져왔다. */
+  :root,
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #E6EBF2;
+    --surface: #FFFFFF;
+    --ink: #16181D;
+    --text: #4A4E57;
+    --muted: #62666F;
+    --line: #E4E7EC;
+    --tab-border: #D6D9E0;
+    --accent: #1F4B99;
+    --on-accent: #FFFFFF;
+    --focus: #1F4B99;
+    --focus-strong: #16181D;
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #13171E;
+      --surface: #212934;
+      --ink: #EBEEF3;
+      --text: #C3C8D0;
+      --muted: #A2A6AD;
+      --line: #344052;
+      --tab-border: #344052;
+      --accent: #94B3E9;
+      --on-accent: #16181D;
+      --focus: #94B3E9;
+      --focus-strong: #EBEEF3;
+    }
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #13171E;
+    --surface: #212934;
+    --ink: #EBEEF3;
+    --text: #C3C8D0;
+    --muted: #A2A6AD;
+    --line: #344052;
+    --tab-border: #344052;
+    --accent: #94B3E9;
+    --on-accent: #16181D;
+    --focus: #94B3E9;
+    --focus-strong: #EBEEF3;
+  }
+  /* 화면 모드 바꾸기 버튼 — 스크롤해도 오른쪽 위에 그대로 있다.
+     자바스크립트가 꺼져 있으면 눌러도 아무 일이 없으므로 그때는 아예 보이지 않게 둔다.
+     누르는 자리는 44×44px이다. 손가락으로 누르기에 필요한 최소 크기다. */
+  .theme-toggle { display: none; }
+  html.js .theme-toggle {
+    position: fixed; top: 12px; right: 12px; z-index: 10;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; padding: 0;
+    border-radius: 999px; border: 1px solid var(--tab-border);
+    background: var(--surface); color: var(--ink); cursor: pointer;
+  }
+  .theme-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .theme-toggle svg { width: 22px; height: 22px; display: block; }
+  .theme-toggle .sun { display: none; }
+  .theme-toggle[data-mode="dark"] .sun { display: block; }
+  .theme-toggle[data-mode="dark"] .moon { display: none; }
   body {
     margin: 0; padding: 32px 20px 64px;
-    background: #E6EBF2; color: #16181D;
+    background: var(--bg); color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
     line-height: 1.7; word-break: keep-all; overflow-wrap: break-word;
   }
@@ -57,27 +140,27 @@
   .gallery-controls button:focus-visible,
   .track:focus-visible,
   summary:focus-visible {
-    outline: 3px solid #1F4B99; outline-offset: 2px;
+    outline: 3px solid var(--focus); outline-offset: 2px;
   }
   /* 파란 단추 위에서는 파란 테두리가 묻힌다. 바깥 바탕(#E6EBF2)과 대비가 큰 검은색을 쓴다. */
-  .store:focus-visible { outline: 3px solid #16181D; outline-offset: 3px; }
+  .store:focus-visible { outline: 3px solid var(--focus-strong); outline-offset: 3px; }
   /* 글은 한 칼럼(40rem), 스크린샷 섹션만 넓게(60rem) 쓴다. */
   .col { max-width: 40rem; margin: 0 auto; }
   .col-wide { max-width: 60rem; margin: 0 auto; }
   h1 { font-size: 1.75rem; margin: 0 0 4px; }
   h2 { font-size: 1.05rem; margin: 40px 0 8px; }
   h3 { font-size: .95rem; margin: 20px 0 4px; }
-  p { margin: 8px 0; color: #4A4E57; }
-  .note { font-size: .9rem; color: #62666F; }
-  a { color: #16181D; }
+  p { margin: 8px 0; color: var(--text); }
+  .note { font-size: .9rem; color: var(--muted); }
+  a { color: var(--ink); }
 
   /* 언어 탭 — 지원 페이지 · 방침 페이지와 같은 값이다. */
   .tabs { display: flex; gap: 8px; margin: 0 auto 28px; padding: 0; max-width: 40rem; }
   .tabs button {
     font: inherit; font-size: .95rem; padding: 6px 14px; border-radius: 999px;
-    border: 1px solid #D6D9E0; background: #FFFFFF; color: #4A4E57; cursor: pointer;
+    border: 1px solid var(--tab-border); background: var(--surface); color: var(--text); cursor: pointer;
   }
-  .tabs button[aria-selected="true"] { background: #1F4B99; border-color: #1F4B99; color: #FFFFFF; }
+  .tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   html.js section[data-lang][hidden] { display: none; }
 
   /* ① 첫 화면 */
@@ -87,12 +170,12 @@
     width: 210px; height: auto; display: block; margin: 0 auto 12px;
   }
   /* 앱 이름은 제목이 아니라 보통 글로 둔다. h1 자리에는 무슨 앱인지 말하는 문장이 온다. */
-  .hero .brand { font-size: 1.05rem; font-weight: 700; color: #16181D; margin: 0 0 2px; }
+  .hero .brand { font-size: 1.05rem; font-weight: 700; color: var(--ink); margin: 0 0 2px; }
   .hero h1 { margin: 0 0 12px; }
-  .hero .lead { color: #16181D; }
+  .hero .lead { color: var(--ink); }
   .hero-shot {
     width: 280px; max-width: 100%; height: auto; display: block; margin: 28px auto 0;
-    border-radius: 24px; border: 1px solid #E4E7EC;
+    border-radius: 24px; border: 1px solid var(--line);
   }
 
   /* 앱스토어 버튼 — 애플 배지 그림을 쓰지 않고 직접 만든 단추다.
@@ -101,10 +184,10 @@
   .hero .cta { justify-content: center; }
   /* 누를 수 있는 글자는 두 줄로 나뉘지 않게 한다. 두 줄이 되면 누르는 자리가 어디까지인지 흐려진다. */
   .store {
-    display: inline-block; background: #1F4B99; color: #FFFFFF; text-decoration: none;
+    display: inline-block; background: var(--accent); color: var(--on-accent); text-decoration: none;
     padding: 12px 24px; border-radius: 999px; font-weight: 600; white-space: nowrap;
   }
-  .price { color: #62666F; font-size: .95rem; }
+  .price { color: var(--muted); font-size: .95rem; }
 
   /* ③ 끝에 한 번 더 두는 버튼 묶음이다. 가운데로 모은다. */
   .screens-cta { margin-top: 28px; text-align: center; }
@@ -112,8 +195,8 @@
 
   /* 첫 화면에서 아래 섹션으로 바로 가는 링크 줄 — 가운뎃점은 HTML에 글자로 적어 두었다.
      링크와 링크 사이에서는 줄이 바뀌어도 되지만, 링크 하나가 두 줄로 나뉘지는 않게 한다. */
-  .jump { margin: 14px 0 0; font-size: .9rem; color: #62666F; text-align: center; }
-  .jump a { color: #4A4E57; white-space: nowrap; }
+  .jump { margin: 14px 0 0; font-size: .9rem; color: var(--muted); text-align: center; }
+  .jump a { color: var(--text); white-space: nowrap; }
 
   /* ② 세 단계 */
   .steps {
@@ -121,18 +204,18 @@
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
   }
   .steps li {
-    counter-increment: step; background: #FFFFFF; border: 1px solid #E4E7EC;
+    counter-increment: step; background: var(--surface); border: 1px solid var(--line);
     border-radius: 14px; padding: 16px;
   }
   .steps li::before {
     content: counter(step);
     display: inline-flex; align-items: center; justify-content: center;
     width: 26px; height: 26px; border-radius: 999px;
-    background: #1F4B99; color: #FFFFFF; font-size: .85rem; line-height: 1;
+    background: var(--accent); color: var(--on-accent); font-size: .85rem; line-height: 1;
     margin-bottom: 8px;
   }
   .steps b { display: block; }
-  .steps span { display: block; font-size: .9rem; color: #62666F; }
+  .steps span { display: block; font-size: .9rem; color: var(--muted); }
 
   /* ③ 화면으로 보는 기능 — 가로로 넘겨 보는 슬라이드 여섯 장이다.
      세로로 쌓아 두면 여섯 장 때문에 페이지가 너무 길어져서, 앱스토어의 스크린샷과 같은 방식으로 바꾸었다.
@@ -158,18 +241,18 @@
   /* 카드 모양은 슬라이드 안쪽 요소에 준다. 슬라이드 자체에 주면 카드가 트랙 폭을 꽉 채워서
      좌우 여백이 사라지고, 카드가 화면 끝에 붙은 것처럼 보인다. */
   .slide-card {
-    background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 18px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
     padding: 16px; margin: 0;
   }
   /* 넓은 화면에서 그림이 카드만큼 커지면 앱 화면이 실제보다 크게 보인다. 300px에서 멈춘다. */
   .slide-card img {
     width: 100%; max-width: 240px; box-sizing: border-box;
     height: auto; display: block; margin: 0 auto;
-    border-radius: 14px; border: 1px solid #E4E7EC;
+    border-radius: 14px; border: 1px solid var(--line);
   }
   .slide-card figcaption { text-align: center; }
   .slide-card h3 { margin: 12px 0 4px; font-size: 1.05rem; }
-  .slide-card p { margin: 0; color: #4A4E57; }
+  .slide-card p { margin: 0; color: var(--text); }
 
   /* 이전 · 다음 버튼과 위치 표시 — 손가락으로 넘기기 어려운 환경에서도 넘길 수 있게 둔다.
      버튼은 44×44px보다 작아지지 않는다. 손가락으로 누르기에 필요한 최소 크기다. */
@@ -179,11 +262,11 @@
   .gallery-controls button {
     font: inherit; font-size: 1.25rem; line-height: 1;
     min-width: 44px; min-height: 44px; padding: 0;
-    border-radius: 999px; border: 1px solid #D6D9E0;
-    background: #FFFFFF; color: #16181D; cursor: pointer;
+    border-radius: 999px; border: 1px solid var(--tab-border);
+    background: var(--surface); color: var(--ink); cursor: pointer;
   }
   .gallery-controls button:disabled { opacity: .4; cursor: default; }
-  .gallery-pos { font-size: .9rem; color: #62666F; min-width: 3.5rem; text-align: center; }
+  .gallery-pos { font-size: .9rem; color: var(--muted); min-width: 3.5rem; text-align: center; }
 
   /* 움직임에 약한 사람을 위해, 시스템에서 움직임 줄이기를 켜 두었으면 부드럽게 미끄러지지 않게 한다. */
   @media (prefers-reduced-motion: reduce) {
@@ -196,42 +279,42 @@
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
   }
   .nots li {
-    background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 14px; padding: 16px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
   }
   .nots b { display: block; }
-  .nots span { display: block; font-size: .9rem; color: #62666F; }
+  .nots span { display: block; font-size: .9rem; color: var(--muted); }
 
   /* ⑤ 판마다 새로 들어간 것 · ⑦ 자주 묻는 것 — 둘 다 접었다 펴는 카드다.
      ⑤는 최신 판 하나만 펴 두고, ⑦은 모두 접어 둔다. */
-  .news { margin: 12px 0 0; padding-left: 1.1rem; color: #4A4E57; }
+  .news { margin: 12px 0 0; padding-left: 1.1rem; color: var(--text); }
   .news li { margin: 6px 0; }
   .release, .faq {
-    background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 14px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
     padding: 14px 18px; margin: 12px 0 0;
   }
-  .release > summary, .faq > summary { font-weight: 600; color: #16181D; cursor: pointer; }
+  .release > summary, .faq > summary { font-weight: 600; color: var(--ink); cursor: pointer; }
   .release > .news { margin-top: 10px; }
 
   /* 판별 블록의 한 항목 아래에 두는 `어떻게 하나요` 접기다.
      접는 카드(`.release`) 안에 또 접는 자리라, 테두리와 배경 없이 들여쓰기만으로 구분한다.
      `.steps-small li`는 `.news li`와 가려내는 힘이 같으므로 반드시 뒤에 적어야 한다. */
   .how { margin: 6px 0 0; }
-  .how > summary { cursor: pointer; font-size: .9rem; color: #1F4B99; }
+  .how > summary { cursor: pointer; font-size: .9rem; color: var(--accent); }
   .steps-small { margin: 6px 0 0; padding-left: 1.2rem; font-size: .9rem; }
   .steps-small li { margin: 4px 0; }
   .faq > p:first-of-type { margin-top: 10px; }
 
   /* ⑥ 권한 표 */
-  table { border-collapse: collapse; width: 100%; margin: 16px 0 8px; background: #FFFFFF; }
-  th, td { border: 1px solid #E4E7EC; padding: 10px 12px; text-align: left; font-size: .95rem; }
-  th { color: #16181D; font-weight: 600; white-space: nowrap; }
-  td { color: #4A4E57; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0 8px; background: var(--surface); }
+  th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; font-size: .95rem; }
+  th { color: var(--ink); font-weight: 600; white-space: nowrap; }
+  td { color: var(--text); }
 
   /* ⑨ 바닥글 */
   footer {
-    max-width: 40rem; margin: 48px auto 0; padding-top: 24px; border-top: 1px solid #E4E7EC;
+    max-width: 40rem; margin: 48px auto 0; padding-top: 24px; border-top: 1px solid var(--line);
   }
-  footer p { font-size: .9rem; color: #62666F; }
+  footer p { font-size: .9rem; color: var(--muted); }
 
   /* 휴대폰 폭에서는 칸을 한 줄로 쌓는다. */
   @media (max-width: 44rem) {
@@ -240,11 +323,367 @@
     </style>
   </head>
   <body>
+    <button type="button" class="theme-toggle" aria-label="Switch light or dark">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M20.6 14.3A8.6 8.6 0 0 1 9.7 3.4 8.6 8.6 0 1 0 20.6 14.3Z" fill="currentColor"></path>
+      </svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.4" fill="currentColor"></circle>
+        <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="1.6" x2="12" y2="4.2"></line>
+          <line x1="12" y1="19.8" x2="12" y2="22.4"></line>
+          <line x1="1.6" y1="12" x2="4.2" y2="12"></line>
+          <line x1="19.8" y1="12" x2="22.4" y2="12"></line>
+          <line x1="4.7" y1="4.7" x2="6.5" y2="6.5"></line>
+          <line x1="17.5" y1="17.5" x2="19.3" y2="19.3"></line>
+          <line x1="4.7" y1="19.3" x2="6.5" y2="17.5"></line>
+          <line x1="17.5" y1="6.5" x2="19.3" y2="4.7"></line>
+        </g>
+      </svg>
+    </button>
     <nav class="tabs" aria-label="Language">
-      <button type="button" data-lang="ko" aria-selected="false">한국어</button>
       <button type="button" data-lang="en" aria-selected="false">English</button>
+      <button type="button" data-lang="ko" aria-selected="false">한국어</button>
       <button type="button" data-lang="ja" aria-selected="false">日本語</button>
     </nav>
+
+    <section data-lang="en" lang="en" data-title="StudyStamp · Study streak, one photo a day">
+      <section id="hero-en" class="col hero">
+        <img class="launch-logo" src="study-stamp-landing-images/launch_logo.png" width="440" height="624" alt="The StudyStamp stamp logo and the maker's mark">
+        <p class="brand">StudyStamp</p>
+        <h1>Study streak, one photo a day</h1>
+        <p class="lead">An app where your streak isn't a checkmark. It's the photo you took that day and the time you studied.</p>
+        <p>An app that keeps count of how many days in a row you've studied, one photo of your book at a time.</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
+          <span class="price">Free</span>
+        </p>
+        <p class="note">No account, no server, no ads.</p>
+        <nav class="jump" aria-label="Jump to a section on this page">
+          <a href="#how-en">How it works</a> ·
+          <a href="#screens-en">Screens</a> ·
+          <a href="#new-en">What's new</a> ·
+          <a href="#faq-en">FAQ</a>
+        </nav>
+        <img class="hero-shot" src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
+      </section>
+
+      <section id="how-en" class="col">
+        <h2>Three steps to a record</h2>
+        <ol class="steps">
+          <li>
+            <b>When you finish studying, take one photo of your book</b>
+            <span>Take it in the app, or pick a photo from your album</span>
+          </li>
+          <li>
+            <b>Pick the time you studied</b>
+            <span>Common durations are one tap away, and you can adjust in 5-minute or 1-minute steps</span>
+          </li>
+          <li>
+            <b>Save it, and your streak grows</b>
+            <span>The moment you save, yesterday's 7-day streak becomes today's 8</span>
+          </li>
+        </ol>
+      </section>
+
+      <section id="screens-en" class="col-wide">
+        <h2>A look at the screens</h2>
+        <div class="gallery">
+          <div class="track" tabindex="0" role="region" aria-label="Six app screens. Swipe sideways to see them">
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" loading="lazy" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
+                <figcaption>
+                  <h3>One photo records your day</h3>
+                  <p>Your streak is the biggest thing on screen when you open the app.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/02_calendar_photos.png" width="660" height="1434" loading="lazy" alt="Calendar screen: a September 2026 calendar where each day shows that day's photo, with one record of 1 hour 32 minutes below">
+                <figcaption>
+                  <h3>The days you shot stack up on the calendar</h3>
+                  <p>Each day shows the last photo you took that day.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/03_album_tiles.png" width="660" height="1434" loading="lazy" alt="Album screen: 13 photos taken in September 2026 laid out as tiles, each tile labeled with the study time for that day">
+                <figcaption>
+                  <h3>Every study day, one photo at a time</h3>
+                  <p>The Album tab lays out a month of photos as tiles.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/04_stats_monthly.png" width="660" height="1434" loading="lazy" alt="Monthly stats screen: a grid of filled-in study days, a total of 14 hours 6 minutes, and a chart of study time by weekday">
+                <figcaption>
+                  <h3>How much did you study this month? See it at a glance</h3>
+                  <p>It shows a filled-in grid, your total time, and a chart by weekday.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/05_stats_yearly.png" width="660" height="1434" loading="lazy" alt="Yearly stats screen: a 2026 total of 56 hours 57 minutes, a bar chart by month, and one photo for each month">
+                <figcaption>
+                  <h3>A whole year in one row of bars</h3>
+                  <p>It shows a chart by month, one photo for each month, and the year's total.</p>
+                </figcaption>
+              </figure>
+            </div>
+            <div class="slide">
+              <figure class="slide-card">
+                <img src="study-stamp-landing-images/en/06_goal_auto.png" width="660" height="1434" loading="lazy" alt="Daily goal screen: a daily goal of 1 hour 30 minutes, progress for today and this month, and how the month's goal adds up">
+                <figcaption>
+                  <h3>Set one daily goal. The month's goal follows</h3>
+                  <p>Before you change a goal, see how the results would change.</p>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+          <div class="gallery-controls">
+            <button type="button" class="gallery-prev" aria-label="Previous screen">‹</button>
+            <span class="gallery-pos" aria-live="polite">1 / 6</span>
+            <button type="button" class="gallery-next" aria-label="Next screen">›</button>
+          </div>
+        </div>
+        <div class="screens-cta">
+          <p class="cta">
+            <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
+            <span class="price">Free</span>
+          </p>
+          <p class="note">No account, no server, no ads.</p>
+        </div>
+      </section>
+
+      <section id="not-en" class="col">
+        <h2>What this app doesn't do</h2>
+        <ul class="nots">
+          <li>
+            <b>There is no timer</b>
+            <span>No timer to start and stop. No sign-up</span>
+          </li>
+          <li>
+            <b>It doesn't count books</b>
+            <span>It counts how many days you've kept going</span>
+          </li>
+          <li>
+            <b>There is no account</b>
+            <span>No sign-up. We never ask for your name or email</span>
+          </li>
+        </ul>
+      </section>
+
+      <section id="new-en" class="col">
+        <h2>What's new in each version</h2>
+        <p class="note">A look at how StudyStamp has changed from version to version.</p>
+        <details class="release" open>
+          <summary>2.0.0 · In review</summary>
+          <ul class="news">
+            <li>The app now has a dark mode. Set your iPhone to dark and the app follows, or pick System, Light, or Dark yourself under Settings › General › Appearance. Your choice stays on this device.
+              <details class="how">
+                <summary>How it works</summary>
+                <ol class="steps-small">
+                  <li>Open the “Settings” tab.</li>
+                  <li>Find the “General” group.</li>
+                  <li>Tap “Appearance”.</li>
+                  <li>Pick “System”, “Light”, or “Dark”. Your choice stays on this device.</li>
+                </ol>
+              </details>
+            </li>
+            <li>Today, Calendar, Album, Stats, and Settings now use the standard iOS large title. On iOS 26 the buttons, the tab bar, and the toast pill are drawn in glass. On iOS 17 to 25 the same parts are drawn as solid shapes.</li>
+            <li>The app now uses the built-in iOS font, which makes it about 19 MB smaller. With no bundled font left, the Open Source Licenses screen in Settings is gone.</li>
+            <li>Settings is now a standard iOS list, and the search field in Album is a standard search field.</li>
+            <li>Right after you save a record, Move sends it to another profile. It appears when you have more than one profile.</li>
+            <li>The save button, the saved screen, and the Move sheet now take on that person's profile color. The profile sheet is titled Switch Profile, and the profile you are using is clearly marked.</li>
+            <li>Text over a bright photo now sits on a dark band so it stays readable, and large text sizes and VoiceOver were improved as well.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.5.0 · September 16, 2026</summary>
+          <ul class="news">
+            <li>Save the month you are looking at in Calendar as a single image. That month's calendar, the days you recorded, the time you studied, and the recap you wrote for that month all go on it.
+              <details class="how">
+                <summary>How it works</summary>
+                <ol class="steps-small">
+                  <li>Open the “Calendar” tab.</li>
+                  <li>Tap “Share” at the right end of the month row. The month you get is the one you are looking at.</li>
+                  <li>Check the card on the “Preview” screen.</li>
+                  <li>Tap “Share” below it. The share sheet opens, so you can post the image or save it to Photos.</li>
+                </ol>
+              </details>
+            </li>
+            <li>Choose the layout of today's card from five options.</li>
+            <li>Choose whether the card shows your profile. Turn off “Include profile” in the preview screen and the avatar and name are left out.</li>
+            <li>The cards you share look tidier. Both cards now sit on a white panel with a soft shadow, and a day with two or three photos fills all four cells of the grid.</li>
+            <li>The screen background is a little darker, so the white cards stand out. The weekday row and date grid in Calendar and the fill grid in Stats now sit on white cards too.</li>
+            <li>The share buttons now have a label. “Share” is written next to the icon on both Today and Calendar, and in Calendar the month name is back in the middle between the two arrows.</li>
+            <li>The app icon has been redrawn. The stamp sits higher and bolder, and its background color now matches the app.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.4.0 · September 14, 2026</summary>
+          <ul class="news">
+            <li>Add tags to a record.
+              <details class="how">
+                <summary>How it works</summary>
+                <ol class="steps-small">
+                  <li>Take or pick a photo, then scroll down the save screen to “Tags (optional)”.</li>
+                  <li>Type a tag and press return. It is added below the field as a pill. You can add up to five per record.</li>
+                  <li>To remove one, tap the ✕ on the pill.</li>
+                  <li>For a record you already saved, open the photo from Album or Calendar and tap “Edit” to find the same field.</li>
+                </ol>
+              </details>
+            </li>
+            <li>Find records by memo and tags in Album.
+              <details class="how">
+                <summary>How it works</summary>
+                <ol class="steps-small">
+                  <li>Open the “Album” tab.</li>
+                  <li>Type what you are looking for in “Search memos and tags”, below the title.</li>
+                  <li>Records are filtered as you type, and the count and total time in each month heading follow.</li>
+                  <li>Tap the ✕ at the right of the field to clear the search and see everything again.</li>
+                </ol>
+              </details>
+            </li>
+            <li>Daily goals are set per profile.</li>
+            <li>Daily goals are kept month by month. A change applies from the first of that month, and past months keep the rate they had.</li>
+            <li>There is one way to set a goal now, and every screen that sets one works minute by minute.</li>
+            <li>Today's card is a single card, and the totals and goal rate in Stats are tidier.</li>
+            <li>Three fixes. A goal that was not a multiple of five was rounded down when saved. Turning a goal off and reopening the screen made it look like you had never set one. A selection mark stayed in the picker after you deleted a photo.</li>
+            <li>Your profile color reaches a few more places, and wording across the app is shorter and clearer.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.3.0 · September 10, 2026</summary>
+          <ul class="news">
+            <li>Import photos you already have.
+              <details class="how">
+                <summary>How it works</summary>
+                <ol class="steps-small">
+                  <li>In the Settings tab, tap “Import Photos”.</li>
+                  <li>Read the notes and tap “Choose Photos”. The app asks for photo library access at this point. You can still use the feature if you decline.</li>
+                  <li>Pick up to 50 photos at once in the iOS photo picker.</li>
+                  <li>Enter the study time once under “Same study time for every photo”, then tap “Next”.</li>
+                  <li>Check the dates under “Will be imported”, then tap the button that shows the count, such as “Import 8 Photos”. Each photo becomes a record on the day it was taken.</li>
+                </ol>
+              </details>
+            </li>
+            <li>Add a photo to your profile.</li>
+            <li>The color you pick for a profile is used as the accent color across the whole screen.</li>
+            <li>Set your daily goal right from the Today screen.</li>
+            <li>The export card has a new look.</li>
+            <li>A new Photos access row in Settings shows the current status and takes you straight to iOS Settings.</li>
+            <li>Text across the app is a little easier to read, and wording in several places is clearer.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.2.0 · September 9, 2026</summary>
+          <ul class="news">
+            <li>Turn today into a single image.</li>
+            <li>Post it wherever you like, or save it to Photos.</li>
+            <li>A preview shows you the image before you send it.</li>
+            <li>Profile names never go into the image — only your photos and your Progress note.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.1.0 · September 7, 2026</summary>
+          <ul class="news">
+            <li>Set study time in 1-minute steps.</li>
+            <li>English and Japanese are now supported.</li>
+            <li>A new Camera Access row in Settings shows the current status and takes you straight to iOS Settings.</li>
+            <li>A new Write a Review row in Settings.</li>
+            <li>The −/+ buttons on the record screen are easier to tap.</li>
+            <li>Fixed an issue where a record started from the + tile at the end of Today's Records was saved to the photo's capture date instead of today.</li>
+          </ul>
+        </details>
+        <details class="release">
+          <summary>1.0.0 · September 3, 2026 · First release</summary>
+          <ul class="news">
+            <li>One photo and your study time make a day's record.</li>
+            <li>See your records as a calendar, an album, monthly stats, and yearly stats.</li>
+            <li>Set one daily goal, and the goals for this month and this year are calculated for you.</li>
+            <li>When a month ends, leave a short recap of it.</li>
+            <li>Up to three people keep their own records on one iPhone.</li>
+            <li>Add records to past days, too.</li>
+          </ul>
+        </details>
+        <p class="note"><a href="#hero-en">Back to top</a></p>
+      </section>
+
+      <section id="privacy-en" class="col">
+        <h2>Privacy and permissions</h2>
+        <p>No account, no server. Your records and photos stay on this device. The app sends nothing anywhere.</p>
+        <p>The app keeps its own copy of the photo. Deleting the original from Photos does not remove the record.</p>
+        <table>
+          <thead>
+            <tr><th>Permission</th><th>When it is asked for</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Camera</td><td>Used only to photograph the book you studied</td></tr>
+            <tr><td>Adding photos</td><td>Used only to save the image you made to your Photos app</td></tr>
+            <tr><td>Reading photos</td><td>Used only to read the capture dates of the photos you import as records</td></tr>
+          </tbody>
+        </table>
+        <p class="note">You can use the app without granting them.</p>
+        <p>See the <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#en">Privacy Policy &amp; Terms of Use</a> for details.</p>
+      </section>
+
+      <section id="faq-en" class="col">
+        <h2>Frequently asked questions</h2>
+
+        <details class="faq">
+          <summary>Does the app time my study sessions?</summary>
+          <p>No. You choose the time yourself. There is no timer.</p>
+          <p>Common durations are one tap away, and you can adjust in 5-minute or 1-minute steps.</p>
+        </details>
+
+        <details class="faq">
+          <summary>How is the streak counted?</summary>
+          <p>Even one record in a day keeps the streak going.</p>
+          <p>Falling short of your goal does not break the streak.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Are my records backed up?</summary>
+          <p>There is no backup feature inside the app.</p>
+          <p>However, if iCloud Backup is on for your iPhone, your records and photos are included in that backup.</p>
+          <p>So your records come along when you move to a new iPhone.</p>
+          <p>With backup off, records cannot be recovered if you delete the app or lose your device.</p>
+        </details>
+
+        <details class="faq">
+          <summary>Can several people use one iPhone?</summary>
+          <p>Up to three people can keep their own records.</p>
+          <p>Tap the profile at the top right to switch. You can add people any time from the Settings tab.</p>
+        </details>
+
+        <p class="note">The remaining questions are on the <a href="https://purple-lamp-236.github.io/study-stamp-support/#en">support page</a>.</p>
+      </section>
+
+      <section id="download-en" class="col">
+        <h2>Download</h2>
+        <p>Made for people who study with books every day and want to keep a trace of it: exam candidates, people preparing for certifications, and steady readers.</p>
+        <p class="cta">
+          <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
+          <span class="price">Free</span>
+        </p>
+        <p class="note">iOS 17.0 or later · iPhone only · Portrait</p>
+      </section>
+
+      <footer id="footer-en">
+        <p>
+          <a href="https://purple-lamp-236.github.io/study-stamp-support/#en">Support</a> ·
+          <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#en">Privacy Policy &amp; Terms of Use</a>
+        </p>
+        <p>Contact <a href="mailto:purple.lamp.236@gmail.com">purple.lamp.236@gmail.com</a></p>
+        <p>PURPLE LAMP</p>
+      </footer>
+    </section>
 
     <section data-lang="ko" lang="ko" data-title="공부도장 · 사진 한 장으로 남기는 공부 기록 · 연속 일수">
       <section id="hero-ko" class="col hero">
@@ -381,6 +820,28 @@
         <h2>판마다 새로 들어간 것</h2>
         <p class="note">공부도장이 판마다 어떻게 바뀌었는지 모았습니다.</p>
         <details class="release" open>
+          <summary>2.0.0 · 심사 중</summary>
+          <ul class="news">
+            <li>다크 모드를 지원합니다. 기기를 어둡게 두면 앱도 함께 어두워지고, 설정 › 일반 › ‘화면 모드’에서 ‘시스템’ · ‘라이트’ · ‘다크’ 가운데 하나를 직접 고를 수도 있습니다. 고른 값은 이 기기에 남습니다.
+              <details class="how">
+                <summary>어떻게 하나요</summary>
+                <ol class="steps-small">
+                  <li>‘설정’ 탭을 엽니다.</li>
+                  <li>‘일반’ 묶음을 찾습니다.</li>
+                  <li>‘화면 모드’를 누릅니다.</li>
+                  <li>‘시스템’ · ‘라이트’ · ‘다크’ 가운데 하나를 고릅니다. 고른 값은 이 기기에 남습니다.</li>
+                </ol>
+              </details>
+            </li>
+            <li>오늘 · 달력 · 앨범 · 통계 · 설정의 제목 줄이 iOS 표준 큰 제목이 됐습니다. iOS 26에서는 버튼과 탭바, 알림 알약이 유리 재질로 보입니다. iOS 17~25에서는 같은 자리가 색을 채운 모양으로 나옵니다.</li>
+            <li>글꼴을 iOS 기본 글꼴로 바꿔 앱 용량이 약 19MB 줄었습니다. 앱이 글꼴을 싣지 않게 되면서 설정의 오픈소스 라이선스 화면도 없어졌습니다.</li>
+            <li>설정 화면이 iOS 표준 목록 모양이 되고, 앨범의 검색 칸이 표준 검색 칸이 됐습니다.</li>
+            <li>기록을 저장한 직후 ‘옮기기’로 그 기록을 다른 프로필에 보낼 수 있습니다. 프로필이 둘 이상일 때 나옵니다.</li>
+            <li>기록 저장 버튼과 저장 완료 화면, 옮기기 시트가 그 사람의 프로필 색을 따라갑니다. 프로필 전환 시트의 제목은 ‘프로필 변경’이 되고, 지금 쓰는 프로필이 또렷하게 표시됩니다.</li>
+            <li>밝은 사진 위의 글자에 어두운 띠를 깔아 읽기 쉽게 했고, 큰 글씨와 VoiceOver에서의 모습도 함께 손봤습니다.</li>
+          </ul>
+        </details>
+        <details class="release">
           <summary>1.5.0 · 2026년 9월 16일</summary>
           <ul class="news">
             <li>달력에서 보고 있는 한 달을 이미지 한 장으로 남길 수 있습니다. 그달의 달력과 기록한 날수, 공부한 시간, 그달에 쓴 결산 글이 함께 담깁니다.
@@ -563,322 +1024,6 @@
       </footer>
     </section>
 
-    <section data-lang="en" lang="en" data-title="StudyStamp · Study streak, one photo a day">
-      <section id="hero-en" class="col hero">
-        <img class="launch-logo" src="study-stamp-landing-images/launch_logo.png" width="440" height="624" alt="The StudyStamp stamp logo and the maker's mark">
-        <p class="brand">StudyStamp</p>
-        <h1>Study streak, one photo a day</h1>
-        <p class="lead">An app where your streak isn't a checkmark. It's the photo you took that day and the time you studied.</p>
-        <p>An app that keeps count of how many days in a row you've studied, one photo of your book at a time.</p>
-        <p class="cta">
-          <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
-          <span class="price">Free</span>
-        </p>
-        <p class="note">No account, no server, no ads.</p>
-        <nav class="jump" aria-label="Jump to a section on this page">
-          <a href="#how-en">How it works</a> ·
-          <a href="#screens-en">Screens</a> ·
-          <a href="#new-en">What's new</a> ·
-          <a href="#faq-en">FAQ</a>
-        </nav>
-        <img class="hero-shot" src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
-      </section>
-
-      <section id="how-en" class="col">
-        <h2>Three steps to a record</h2>
-        <ol class="steps">
-          <li>
-            <b>When you finish studying, take one photo of your book</b>
-            <span>Take it in the app, or pick a photo from your album</span>
-          </li>
-          <li>
-            <b>Pick the time you studied</b>
-            <span>Common durations are one tap away, and you can adjust in 5-minute or 1-minute steps</span>
-          </li>
-          <li>
-            <b>Save it, and your streak grows</b>
-            <span>The moment you save, yesterday's 7-day streak becomes today's 8</span>
-          </li>
-        </ol>
-      </section>
-
-      <section id="screens-en" class="col-wide">
-        <h2>A look at the screens</h2>
-        <div class="gallery">
-          <div class="track" tabindex="0" role="region" aria-label="Six app screens. Swipe sideways to see them">
-            <div class="slide">
-              <figure class="slide-card">
-                <img src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" loading="lazy" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
-                <figcaption>
-                  <h3>One photo records your day</h3>
-                  <p>Your streak is the biggest thing on screen when you open the app.</p>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="slide">
-              <figure class="slide-card">
-                <img src="study-stamp-landing-images/en/02_calendar_photos.png" width="660" height="1434" loading="lazy" alt="Calendar screen: a September 2026 calendar where each day shows that day's photo, with one record of 1 hour 32 minutes below">
-                <figcaption>
-                  <h3>The days you shot stack up on the calendar</h3>
-                  <p>Each day shows the last photo you took that day.</p>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="slide">
-              <figure class="slide-card">
-                <img src="study-stamp-landing-images/en/03_album_tiles.png" width="660" height="1434" loading="lazy" alt="Album screen: 13 photos taken in September 2026 laid out as tiles, each tile labeled with the study time for that day">
-                <figcaption>
-                  <h3>Every study day, one photo at a time</h3>
-                  <p>The Album tab lays out a month of photos as tiles.</p>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="slide">
-              <figure class="slide-card">
-                <img src="study-stamp-landing-images/en/04_stats_monthly.png" width="660" height="1434" loading="lazy" alt="Monthly stats screen: a grid of filled-in study days, a total of 14 hours 6 minutes, and a chart of study time by weekday">
-                <figcaption>
-                  <h3>How much did you study this month? See it at a glance</h3>
-                  <p>It shows a filled-in grid, your total time, and a chart by weekday.</p>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="slide">
-              <figure class="slide-card">
-                <img src="study-stamp-landing-images/en/05_stats_yearly.png" width="660" height="1434" loading="lazy" alt="Yearly stats screen: a 2026 total of 56 hours 57 minutes, a bar chart by month, and one photo for each month">
-                <figcaption>
-                  <h3>A whole year in one row of bars</h3>
-                  <p>It shows a chart by month, one photo for each month, and the year's total.</p>
-                </figcaption>
-              </figure>
-            </div>
-            <div class="slide">
-              <figure class="slide-card">
-                <img src="study-stamp-landing-images/en/06_goal_auto.png" width="660" height="1434" loading="lazy" alt="Daily goal screen: a daily goal of 1 hour 30 minutes, progress for today and this month, and how the month's goal adds up">
-                <figcaption>
-                  <h3>Set one daily goal. The month's goal follows</h3>
-                  <p>Before you change a goal, see how the results would change.</p>
-                </figcaption>
-              </figure>
-            </div>
-          </div>
-          <div class="gallery-controls">
-            <button type="button" class="gallery-prev" aria-label="Previous screen">‹</button>
-            <span class="gallery-pos" aria-live="polite">1 / 6</span>
-            <button type="button" class="gallery-next" aria-label="Next screen">›</button>
-          </div>
-        </div>
-        <div class="screens-cta">
-          <p class="cta">
-            <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
-            <span class="price">Free</span>
-          </p>
-          <p class="note">No account, no server, no ads.</p>
-        </div>
-      </section>
-
-      <section id="not-en" class="col">
-        <h2>What this app doesn't do</h2>
-        <ul class="nots">
-          <li>
-            <b>There is no timer</b>
-            <span>No timer to start and stop. No sign-up</span>
-          </li>
-          <li>
-            <b>It doesn't count books</b>
-            <span>It counts how many days you've kept going</span>
-          </li>
-          <li>
-            <b>There is no account</b>
-            <span>No sign-up. We never ask for your name or email</span>
-          </li>
-        </ul>
-      </section>
-
-      <section id="new-en" class="col">
-        <h2>What's new in each version</h2>
-        <p class="note">A look at how StudyStamp has changed from version to version.</p>
-        <details class="release" open>
-          <summary>1.5.0 · September 16, 2026</summary>
-          <ul class="news">
-            <li>Save the month you are looking at in Calendar as a single image. That month's calendar, the days you recorded, the time you studied, and the recap you wrote for that month all go on it.
-              <details class="how">
-                <summary>How it works</summary>
-                <ol class="steps-small">
-                  <li>Open the “Calendar” tab.</li>
-                  <li>Tap “Share” at the right end of the month row. The month you get is the one you are looking at.</li>
-                  <li>Check the card on the “Preview” screen.</li>
-                  <li>Tap “Share” below it. The share sheet opens, so you can post the image or save it to Photos.</li>
-                </ol>
-              </details>
-            </li>
-            <li>Choose the layout of today's card from five options.</li>
-            <li>Choose whether the card shows your profile. Turn off “Include profile” in the preview screen and the avatar and name are left out.</li>
-            <li>The cards you share look tidier. Both cards now sit on a white panel with a soft shadow, and a day with two or three photos fills all four cells of the grid.</li>
-            <li>The screen background is a little darker, so the white cards stand out. The weekday row and date grid in Calendar and the fill grid in Stats now sit on white cards too.</li>
-            <li>The share buttons now have a label. “Share” is written next to the icon on both Today and Calendar, and in Calendar the month name is back in the middle between the two arrows.</li>
-            <li>The app icon has been redrawn. The stamp sits higher and bolder, and its background color now matches the app.</li>
-          </ul>
-        </details>
-        <details class="release">
-          <summary>1.4.0 · September 14, 2026</summary>
-          <ul class="news">
-            <li>Add tags to a record.
-              <details class="how">
-                <summary>How it works</summary>
-                <ol class="steps-small">
-                  <li>Take or pick a photo, then scroll down the save screen to “Tags (optional)”.</li>
-                  <li>Type a tag and press return. It is added below the field as a pill. You can add up to five per record.</li>
-                  <li>To remove one, tap the ✕ on the pill.</li>
-                  <li>For a record you already saved, open the photo from Album or Calendar and tap “Edit” to find the same field.</li>
-                </ol>
-              </details>
-            </li>
-            <li>Find records by memo and tags in Album.
-              <details class="how">
-                <summary>How it works</summary>
-                <ol class="steps-small">
-                  <li>Open the “Album” tab.</li>
-                  <li>Type what you are looking for in “Search memos and tags”, below the title.</li>
-                  <li>Records are filtered as you type, and the count and total time in each month heading follow.</li>
-                  <li>Tap the ✕ at the right of the field to clear the search and see everything again.</li>
-                </ol>
-              </details>
-            </li>
-            <li>Daily goals are set per profile.</li>
-            <li>Daily goals are kept month by month. A change applies from the first of that month, and past months keep the rate they had.</li>
-            <li>There is one way to set a goal now, and every screen that sets one works minute by minute.</li>
-            <li>Today's card is a single card, and the totals and goal rate in Stats are tidier.</li>
-            <li>Three fixes. A goal that was not a multiple of five was rounded down when saved. Turning a goal off and reopening the screen made it look like you had never set one. A selection mark stayed in the picker after you deleted a photo.</li>
-            <li>Your profile color reaches a few more places, and wording across the app is shorter and clearer.</li>
-          </ul>
-        </details>
-        <details class="release">
-          <summary>1.3.0 · September 10, 2026</summary>
-          <ul class="news">
-            <li>Import photos you already have.
-              <details class="how">
-                <summary>How it works</summary>
-                <ol class="steps-small">
-                  <li>In the Settings tab, tap “Import Photos”.</li>
-                  <li>Read the notes and tap “Choose Photos”. The app asks for photo library access at this point. You can still use the feature if you decline.</li>
-                  <li>Pick up to 50 photos at once in the iOS photo picker.</li>
-                  <li>Enter the study time once under “Same study time for every photo”, then tap “Next”.</li>
-                  <li>Check the dates under “Will be imported”, then tap the button that shows the count, such as “Import 8 Photos”. Each photo becomes a record on the day it was taken.</li>
-                </ol>
-              </details>
-            </li>
-            <li>Add a photo to your profile.</li>
-            <li>The color you pick for a profile is used as the accent color across the whole screen.</li>
-            <li>Set your daily goal right from the Today screen.</li>
-            <li>The export card has a new look.</li>
-            <li>A new Photos access row in Settings shows the current status and takes you straight to iOS Settings.</li>
-            <li>Text across the app is a little easier to read, and wording in several places is clearer.</li>
-          </ul>
-        </details>
-        <details class="release">
-          <summary>1.2.0 · September 9, 2026</summary>
-          <ul class="news">
-            <li>Turn today into a single image.</li>
-            <li>Post it wherever you like, or save it to Photos.</li>
-            <li>A preview shows you the image before you send it.</li>
-            <li>Profile names never go into the image — only your photos and your Progress note.</li>
-          </ul>
-        </details>
-        <details class="release">
-          <summary>1.1.0 · September 7, 2026</summary>
-          <ul class="news">
-            <li>Set study time in 1-minute steps.</li>
-            <li>English and Japanese are now supported.</li>
-            <li>A new Camera Access row in Settings shows the current status and takes you straight to iOS Settings.</li>
-            <li>A new Write a Review row in Settings.</li>
-            <li>The −/+ buttons on the record screen are easier to tap.</li>
-            <li>Fixed an issue where a record started from the + tile at the end of Today's Records was saved to the photo's capture date instead of today.</li>
-          </ul>
-        </details>
-        <details class="release">
-          <summary>1.0.0 · September 3, 2026 · First release</summary>
-          <ul class="news">
-            <li>One photo and your study time make a day's record.</li>
-            <li>See your records as a calendar, an album, monthly stats, and yearly stats.</li>
-            <li>Set one daily goal, and the goals for this month and this year are calculated for you.</li>
-            <li>When a month ends, leave a short recap of it.</li>
-            <li>Up to three people keep their own records on one iPhone.</li>
-            <li>Add records to past days, too.</li>
-          </ul>
-        </details>
-        <p class="note"><a href="#hero-en">Back to top</a></p>
-      </section>
-
-      <section id="privacy-en" class="col">
-        <h2>Privacy and permissions</h2>
-        <p>No account, no server. Your records and photos stay on this device. The app sends nothing anywhere.</p>
-        <p>The app keeps its own copy of the photo. Deleting the original from Photos does not remove the record.</p>
-        <table>
-          <thead>
-            <tr><th>Permission</th><th>When it is asked for</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Camera</td><td>Used only to photograph the book you studied</td></tr>
-            <tr><td>Adding photos</td><td>Used only to save the image you made to your Photos app</td></tr>
-            <tr><td>Reading photos</td><td>Used only to read the capture dates of the photos you import as records</td></tr>
-          </tbody>
-        </table>
-        <p class="note">You can use the app without granting them.</p>
-        <p>See the <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#en">Privacy Policy &amp; Terms of Use</a> for details.</p>
-      </section>
-
-      <section id="faq-en" class="col">
-        <h2>Frequently asked questions</h2>
-
-        <details class="faq">
-          <summary>Does the app time my study sessions?</summary>
-          <p>No. You choose the time yourself. There is no timer.</p>
-          <p>Common durations are one tap away, and you can adjust in 5-minute or 1-minute steps.</p>
-        </details>
-
-        <details class="faq">
-          <summary>How is the streak counted?</summary>
-          <p>Even one record in a day keeps the streak going.</p>
-          <p>Falling short of your goal does not break the streak.</p>
-        </details>
-
-        <details class="faq">
-          <summary>Are my records backed up?</summary>
-          <p>There is no backup feature inside the app.</p>
-          <p>However, if iCloud Backup is on for your iPhone, your records and photos are included in that backup.</p>
-          <p>So your records come along when you move to a new iPhone.</p>
-          <p>With backup off, records cannot be recovered if you delete the app or lose your device.</p>
-        </details>
-
-        <details class="faq">
-          <summary>Can several people use one iPhone?</summary>
-          <p>Up to three people can keep their own records.</p>
-          <p>Tap the profile at the top right to switch. You can add people any time from the Settings tab.</p>
-        </details>
-
-        <p class="note">The remaining questions are on the <a href="https://purple-lamp-236.github.io/study-stamp-support/#en">support page</a>.</p>
-      </section>
-
-      <section id="download-en" class="col">
-        <h2>Download</h2>
-        <p>Made for people who study with books every day and want to keep a trace of it: exam candidates, people preparing for certifications, and steady readers.</p>
-        <p class="cta">
-          <a class="store" href="https://apps.apple.com/app/id6807436972">Get it on the App Store</a>
-          <span class="price">Free</span>
-        </p>
-        <p class="note">iOS 17.0 or later · iPhone only · Portrait</p>
-      </section>
-
-      <footer id="footer-en">
-        <p>
-          <a href="https://purple-lamp-236.github.io/study-stamp-support/#en">Support</a> ·
-          <a href="https://purple-lamp-236.github.io/study-stamp-privacy/#en">Privacy Policy &amp; Terms of Use</a>
-        </p>
-        <p>Contact <a href="mailto:purple.lamp.236@gmail.com">purple.lamp.236@gmail.com</a></p>
-        <p>PURPLE LAMP</p>
-      </footer>
-    </section>
-
     <section data-lang="ja" lang="ja" data-title="勉強スタンプ · 写真1枚で残す勉強記録・連続日数">
       <section id="hero-ja" class="col hero">
         <img class="launch-logo" src="study-stamp-landing-images/launch_logo.png" width="440" height="624" alt="勉強スタンプのスタンプロゴと制作者の表示">
@@ -1014,6 +1159,28 @@
         <h2>版ごとの新機能</h2>
         <p class="note">勉強スタンプが版ごとにどう変わってきたかをまとめました。</p>
         <details class="release" open>
+          <summary>2.0.0 · 審査中</summary>
+          <ul class="news">
+            <li>ダークモードに対応しました。端末を暗くするとアプリも一緒に暗くなり、設定 › 一般 ›「画面モード」で「システム」「ライト」「ダーク」のいずれかを自分で選ぶこともできます。選んだ値はこの端末に残ります。
+              <details class="how">
+                <summary>使い方</summary>
+                <ol class="steps-small">
+                  <li>「設定」タブを開きます。</li>
+                  <li>「一般」のまとまりを探します。</li>
+                  <li>「画面モード」を押します。</li>
+                  <li>「システム」「ライト」「ダーク」のいずれかを選びます。選んだ値はこの端末に残ります。</li>
+                </ol>
+              </details>
+            </li>
+            <li>「今日」「カレンダー」「アルバム」「統計」「設定」の見出しがiOS標準の大きなタイトルになりました。iOS 26ではボタン・タブバー・お知らせの丸い帯がガラスの質感で表示されます。iOS 17〜25では同じ場所が塗りつぶした形で表示されます。</li>
+            <li>書体をiOS標準のものに変えて、アプリの容量が約19MB減りました。フォントを同梱しなくなったので、設定の「オープンソースライセンス」画面もなくなりました。</li>
+            <li>設定画面がiOS標準のリストになり、アルバムの検索欄も標準の検索欄になりました。</li>
+            <li>記録を保存した直後に「移す」で、その記録を別のプロフィールへ送れます。プロフィールが2つ以上あるときに表示されます。</li>
+            <li>記録の保存ボタン・保存完了の画面・「移す」シートが、その人のプロフィールの色に合わせて表示されます。プロフィールの切り替えシートのタイトルは「プロフィールを切り替え」になり、いま使っているプロフィールがはっきり示されます。</li>
+            <li>明るい写真の上の文字に暗い帯を敷いて読みやすくし、大きな文字やVoiceOverでの見え方も調整しました。</li>
+          </ul>
+        </details>
+        <details class="release">
           <summary>1.5.0 · 2026年9月16日</summary>
           <ul class="news">
             <li>カレンダーで見ている1か月を1枚の画像として残せます。その月のカレンダー・記録した日数・勉強した時間・その月に書いたふりかえりが一緒に入ります。
@@ -1197,7 +1364,7 @@
 
     <script>
       (function () {
-        var languages = ["ko", "en", "ja"];
+        var languages = ["en", "ko", "ja"];
         document.documentElement.classList.add("js");
         // 해시에서 언어를 읽는다. `#ko`처럼 언어 코드만 있는 것과
         // `#new-ko`처럼 섹션 id 끝에 언어가 붙은 것을 모두 본다.
@@ -1240,6 +1407,10 @@
             if (title) { document.title = title; }
           }
           // 방금 보이게 된 언어의 슬라이드는 그전까지 폭이 0이라 위치를 셀 수 없었다. 이제 다시 센다.
+          // 버튼 이름도 보이는 언어에 맞춘다. 화면 낭독기가 이 글을 읽는다.
+          if (themeButton && themeLabels[code]) {
+            themeButton.setAttribute("aria-label", themeLabels[code]);
+          }
           refreshGalleries();
         }
 
@@ -1300,6 +1471,39 @@
           if (refresh) { galleries.push(refresh); }
         });
 
+        // 화면 모드 — 오른쪽 위의 해 · 달 버튼이 맡는다.
+        // 고른 값은 이 브라우저(localStorage)의 `theme` 자리에 남고, 다음에 열 때도 그대로다.
+        // 고른 적이 없으면 기기 설정을 따른다.
+        var themeLabels = {
+          ko: "화면 모드 바꾸기",
+          en: "Switch light or dark",
+          ja: "画面モードを切り替える"
+        };
+        var themeButton = document.querySelector(".theme-toggle");
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        function currentTheme() {
+          var chosen = document.documentElement.getAttribute("data-theme");
+          if (chosen === "light" || chosen === "dark") { return chosen; }
+          return darkQuery.matches ? "dark" : "light";
+        }
+        // 지금 다크면 해를, 라이트면 달을 보인다. 누르면 어느 쪽으로 바뀌는지 알리는 그림이다.
+        function markTheme() {
+          if (themeButton) { themeButton.setAttribute("data-mode", currentTheme()); }
+        }
+        if (themeButton) {
+          themeButton.addEventListener("click", function () {
+            var next = currentTheme() === "dark" ? "light" : "dark";
+            document.documentElement.setAttribute("data-theme", next);
+            try {
+              localStorage.setItem("theme", next);
+            } catch (error) {
+              // 저장을 막아 둔 브라우저에서는 이번 방문에만 적용된다.
+            }
+            markTheme();
+          });
+        }
+        if (darkQuery.addEventListener) { darkQuery.addEventListener("change", markTheme); }
+        markTheme();
         document.querySelectorAll(".tabs button").forEach(function (button) {
           button.addEventListener("click", function () {
             var code = button.getAttribute("data-lang");
