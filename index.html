@@ -21,6 +21,8 @@
     <!--
       앱을 소개하는 랜딩 페이지다. 기준이 되는 판은 1.3.0(빌드 54)이다.
       담을 것은 `05_release/landing_page_plan.md`에 정해져 있다. 섹션 ①~⑨의 순서를 그대로 따른다.
+      ③ 바로 뒤에는 iPhone Duo 두 칸 화면을 보이는 ③-2(`duo-<언어>`)가 있다(2.3.0에서 더함).
+      번호를 하나씩 미루지 않고 ③-2로 둔 것은, 다른 문서가 ⑤ · ⑨ 같은 번호로 이 페이지를 가리키고 있어서다.
 
       **한 장에 영어 · 한국어 · 일본어가 모두 들어 있다.** 위쪽 탭으로 바꿔 본다.
       탭과 언어 묶음의 순서는 **영어 · 한국어 · 일본어**다 (2026년 9월 19일 사용자 결정).
@@ -31,6 +33,8 @@
       **그림은 같은 폴더의 `study-stamp-landing-images/`에서 가져온다.**
       HTML을 GitHub Pages에 올릴 때 이 폴더를 함께 올려야 한다.
       언어마다 그 언어로 찍은 스크린샷 여섯 장을 쓴다(파일 이름은 세 언어가 같다).
+      ③-2에는 iPhone Duo 안쪽 화면을 가로로 든 그림 두 장(`duo_01_home_streak.png` · `duo_02_calendar_photos.png`)을 더 쓴다.
+      ① 첫 화면에는 iPhone 오늘 화면 옆에 접은 iPhone Duo의 바깥 화면 그림(`duo_outer_01_home_streak.png`)을 함께 세운다.
 
       **탭 제목은 각 `<section data-lang>`의 `data-title` 값으로 정한다.**
       아래 스크립트가 언어를 바꿀 때 그 값을 `document.title`에 넣는다.
@@ -177,6 +181,25 @@
     width: 280px; max-width: 100%; height: auto; display: block; margin: 28px auto 0;
     border-radius: 24px; border: 1px solid var(--line);
   }
+  /* 첫 화면 그림 두 장 — iPhone 화면과, 접은 iPhone Duo의 바깥 화면이다.
+     두 사본은 원본을 같은 비율(절반)로 줄였다. 칸 폭도 사본 폭(660 : 699)에 비례해 나누므로
+     두 화면이 같은 배율로 보이고, 더 길게 서는 iPhone 그림이 주인공이 된다. 아래쪽을 맞춰 나란히 세운다.
+     좁은 화면에서도 위아래로 쌓지 않고 함께 줄어든다. 쌓으면 첫 화면이 너무 길어진다.
+     592px은 iPhone 그림이 지금처럼 280px 폭이 되는 값이다(280 + 16 + 296).
+     좁은 화면에서는 한 그림의 설명만 두 줄이 되기도 한다. 그래도 그림 아래쪽이 어긋나지 않게
+     줄을 둘(그림 줄 · 설명 줄)로 나누고, 두 `figure`가 `subgrid`로 그 줄을 함께 쓴다. */
+  .hero-shots {
+    display: grid; grid-template-columns: minmax(0, 660fr) minmax(0, 699fr); column-gap: 16px;
+    max-width: 592px; margin: 28px auto 0;
+  }
+  .hero-shots figure {
+    display: grid; grid-row: span 2; grid-template-rows: subgrid; margin: 0;
+  }
+  /* `border-box`가 없으면 테두리 2px이 칸 폭에 더해져 그림이 칸 밖으로 넘친다. */
+  .hero-shots .hero-shot { width: 100%; box-sizing: border-box; margin: 0; align-self: end; }
+  .hero-shots figcaption { margin-top: 6px; font-size: .85rem; line-height: 1.4; color: var(--muted); }
+  /* 설명이 두 줄이 되면 기기 이름과 괄호 사이에서만 줄이 바뀌게 한다. `(접은 / 화면)`처럼 끊기지 않는다. */
+  .hero-shots figcaption span { display: inline-block; }
 
   /* 앱스토어 버튼 — 애플 배지 그림을 쓰지 않고 직접 만든 단추다.
      좁은 화면에서는 `무료` 표시가 버튼 아래로 내려가도록 줄바꿈을 허용한다. */
@@ -273,6 +296,16 @@
     .track { scroll-behavior: auto; }
   }
 
+  /* ③-2 iPhone Duo 두 칸 화면 — 가로로 긴 그림 두 장이다. 넓은 화면에서는 나란히 놓고,
+     휴대폰 폭에서는 아래 `@media`가 위아래로 쌓는다. 칸은 그림 폭보다 작아질 수 있게 `minmax(0, 1fr)`로 둔다.
+     카드 모양은 ③의 `.slide-card`를 그대로 쓰고, 그림만 카드 폭을 꽉 채운다(③의 세로 그림은 240px에서 멈춘다). */
+  .duo-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0 0;
+  }
+  .duo-grid .slide-card img { max-width: 100%; }
+  /* 그림 설명의 `‹ ›`는 한 덩어리라서, 두 기호가 서로 다른 줄로 갈라지지 않게 한다. */
+  .duo-grid .arrows { white-space: nowrap; }
+
   /* ④ 하지 않는 것 */
   .nots {
     list-style: none; margin: 12px 0 0; padding: 0;
@@ -319,6 +352,7 @@
   /* 휴대폰 폭에서는 칸을 한 줄로 쌓는다. */
   @media (max-width: 44rem) {
     .steps, .nots { grid-template-columns: 1fr; }
+    .duo-grid { grid-template-columns: minmax(0, 1fr); }
   }
     </style>
   </head>
@@ -365,7 +399,16 @@
           <a href="#new-en">What's new</a> ·
           <a href="#faq-en">FAQ</a>
         </nav>
-        <img class="hero-shot" src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
+        <div class="hero-shots">
+          <figure>
+            <img class="hero-shot" src="study-stamp-landing-images/en/01_home_streak.png" width="660" height="1434" alt="Today screen: a large 8 for the current streak, the last 7 days of photos, and today's 1 hour 32 minutes at 102% of the goal">
+            <figcaption>iPhone</figcaption>
+          </figure>
+          <figure>
+            <img class="hero-shot" src="study-stamp-landing-images/en/duo_outer_01_home_streak.png" width="699" height="1017" alt="Today on folded iPhone Duo: a large 8 for the streak, last 7 days of photos, 1 hour 32 minutes at 102%, tab bar on the right">
+            <figcaption><span>iPhone Duo,</span> <span>folded</span></figcaption>
+          </figure>
+        </div>
       </section>
 
       <section id="how-en" class="col">
@@ -460,6 +503,28 @@
         </div>
       </section>
 
+      <section id="duo-en" class="col-wide">
+        <h2>Two panes on iPhone Duo</h2>
+        <p class="note">New in version 2.3.0</p>
+        <p>Unfold iPhone Duo and hold the inner display sideways, and each of the five tabs splits into left and right panes. When it's folded or held upright, and on other iPhone models, the app shows a single screen as before.</p>
+        <div class="duo-grid">
+          <figure class="slide-card">
+            <img src="study-stamp-landing-images/en/duo_01_home_streak.png" width="1200" height="844" loading="lazy" alt="Today on iPhone Duo held sideways: Sep 9 to 15 on the left, a large 8 for the streak and 1 hour 32 minutes on the right">
+            <figcaption>
+              <h3>Today shows “Previous 7 days” on the left</h3>
+              <p>The 7 days before the last 7 days are listed one row per day. Tap a row to open that day's records or add a record for that date.</p>
+            </figcaption>
+          </figure>
+          <figure class="slide-card">
+            <img src="study-stamp-landing-images/en/duo_02_calendar_photos.png" width="1200" height="844" loading="lazy" alt="Calendar on iPhone Duo held sideways: August 2026 on the left, September 2026 on the right, each day showing that day's photo">
+            <figcaption>
+              <h3>Calendar shows two months side by side</h3>
+              <p>Last month is on the left and this month is on the right. Tap <span class="arrows">‹ ›</span> to move both panes together.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section id="not-en" class="col">
         <h2>What this app doesn't do</h2>
         <ul class="nots">
@@ -482,6 +547,20 @@
         <h2>What's new in each version</h2>
         <p class="note">A look at how StudyStamp has changed from version to version.</p>
         <details class="release" open>
+          <summary>2.3.0 · In review</summary>
+          <ul class="news">
+            <li>When you unfold iPhone Duo and hold the inner display sideways, each of the five tabs now splits into left and right panes.<br>
+              Today lists the 7 days before the last 7 days on the left under “Previous 7 days”, one row per day, and tapping a row opens that day's records or lets you add a record for that date.<br>
+              Calendar shows last month beside this month, and Stats shows the previous period beside the current one, with ‹ › moving both panes together.<br>
+              Album starts with a grid across the full width, and choosing a photo opens its record in the right pane.<br>
+              In Settings, the screen you choose from the list opens in the right pane.</li>
+            <li>Held upright, the iPhone Duo inner display still shows a single screen, and the row of the last 7 days on Today and the date cells in Calendar grow to fit the extra width, while Album fits more photos in each row.</li>
+            <li>In Calendar, the date you selected now stays selected after you save a record or write a recap.</li>
+            <li>Switching profiles now closes a record left open in Album and shows the new profile's album.</li>
+            <li>VoiceOver now reads period names in Calendar and Stats as headings, and for the “Share” button in Calendar, it also says which month will be shared.</li>
+          </ul>
+        </details>
+        <details class="release">
           <summary>2.2.0 · October 23, 2026</summary>
           <ul class="news">
             <li>Confetti now bursts from the middle of the celebration notice when you reach your daily goal.<br>
@@ -768,7 +847,16 @@
           <a href="#new-ko">새로 들어간 것</a> ·
           <a href="#faq-ko">자주 묻는 것</a>
         </nav>
-        <img class="hero-shot" src="study-stamp-landing-images/ko/01_home_streak.png" width="660" height="1434" alt="오늘 화면. 8일째 이어가는 중이라는 큰 숫자, 최근 7일 사진 줄, 오늘 1시간 32분과 목표 달성률 102%">
+        <div class="hero-shots">
+          <figure>
+            <img class="hero-shot" src="study-stamp-landing-images/ko/01_home_streak.png" width="660" height="1434" alt="오늘 화면. 8일째 이어가는 중이라는 큰 숫자, 최근 7일 사진 줄, 오늘 1시간 32분과 목표 달성률 102%">
+            <figcaption>iPhone</figcaption>
+          </figure>
+          <figure>
+            <img class="hero-shot" src="study-stamp-landing-images/ko/duo_outer_01_home_streak.png" width="699" height="1017" alt="접은 iPhone Duo의 바깥 화면에 뜬 오늘 화면. 8일째라는 큰 숫자, 최근 7일 사진 줄, 오늘 1시간 32분과 달성률 102%, 오른쪽에 세로로 선 탭 막대">
+            <figcaption><span>iPhone Duo</span> <span>(접은 화면)</span></figcaption>
+          </figure>
+        </div>
       </section>
 
       <section id="how-ko" class="col">
@@ -863,6 +951,28 @@
         </div>
       </section>
 
+      <section id="duo-ko" class="col-wide">
+        <h2>iPhone Duo에서는 두 칸으로</h2>
+        <p class="note">2.3.0부터</p>
+        <p>iPhone Duo를 펼쳐 안쪽 화면을 가로로 들면, 다섯 탭이 왼쪽과 오른쪽 두 칸으로 나뉩니다. 접어 둘 때나 세로로 들 때, 그리고 다른 아이폰에서는 한 화면 그대로입니다.</p>
+        <div class="duo-grid">
+          <figure class="slide-card">
+            <img src="study-stamp-landing-images/ko/duo_01_home_streak.png" width="1200" height="844" loading="lazy" alt="iPhone Duo를 가로로 든 오늘 화면. 왼쪽 칸에 9월 15일부터 9월 9일까지 그 전 7일 목록, 오른쪽 칸에 8일째 이어가는 중이라는 큰 숫자와 오늘 1시간 32분">
+            <figcaption>
+              <h3>오늘 화면 왼쪽에 ‘그 전 7일’</h3>
+              <p>최근 7일보다 앞선 7일을 하루 한 줄로 보여 줍니다. 줄을 누르면 그날의 기록을 보거나 그 날짜로 기록할 수 있습니다.</p>
+            </figcaption>
+          </figure>
+          <figure class="slide-card">
+            <img src="study-stamp-landing-images/ko/duo_02_calendar_photos.png" width="1200" height="844" loading="lazy" alt="iPhone Duo를 가로로 든 달력 화면. 왼쪽 칸에 2026년 8월, 오른쪽 칸에 2026년 9월 달력이 나란히 있고, 날짜 칸마다 그날 찍은 책 사진이 들어가 있습니다">
+            <figcaption>
+              <h3>달력은 두 달을 나란히</h3>
+              <p>왼쪽에 지난달, 오른쪽에 이번 달을 놓습니다. <span class="arrows">‹ ›</span>를 누르면 두 칸이 함께 넘어갑니다.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section id="not-ko" class="col">
         <h2>이 앱이 하지 않는 것</h2>
         <ul class="nots">
@@ -885,6 +995,20 @@
         <h2>판마다 새로 들어간 것</h2>
         <p class="note">공부도장이 판마다 어떻게 바뀌었는지 모았습니다.</p>
         <details class="release" open>
+          <summary>2.3.0 · 심사 중</summary>
+          <ul class="news">
+            <li>iPhone Duo를 펼쳐 안쪽 화면을 가로로 들면, 다섯 탭이 왼쪽과 오른쪽 두 칸으로 나뉩니다.<br>
+              오늘 화면은 왼쪽 칸에 최근 7일보다 앞선 ‘그 전 7일’을 하루 한 줄로 보여 주고, 줄을 누르면 그날의 기록을 보거나 그 날짜로 기록할 수 있습니다.<br>
+              달력은 지난달과 이번 달을, 통계는 지난 기간과 이번 기간을 두 칸에 나란히 보여 주고, ‹ ›를 누르면 두 칸이 함께 넘어갑니다.<br>
+              앨범은 처음에 화면 폭 전체의 격자로 보이고, 사진을 고르면 오른쪽 칸에 그 기록이 열립니다.<br>
+              설정은 왼쪽 목록에서 고른 화면을 오른쪽 칸에 엽니다.</li>
+            <li>iPhone Duo의 안쪽 화면을 세로로 들면 지금처럼 한 화면이고, 최근 7일 줄과 달력 칸이 넓은 폭에 맞춰 커지며 앨범은 한 줄에 사진을 더 놓습니다.</li>
+            <li>달력에서 날짜를 고른 뒤 기록을 저장하거나 결산을 써도, 고른 날짜가 그대로 남습니다.</li>
+            <li>프로필을 바꾸면 앨범에 열려 있던 기록이 닫히고, 바꾼 프로필의 앨범이 보입니다.</li>
+            <li>VoiceOver가 달력과 통계의 기간 이름을 머리글로 알려 주고, 달력의 ‘내보내기’ 단추는 어느 달을 내보내는지 함께 읽어 줍니다.</li>
+          </ul>
+        </details>
+        <details class="release">
           <summary>2.2.0 · 2026년 10월 23일</summary>
           <ul class="news">
             <li>하루 목표 축하 알림이 뜨면 알림 가운데에서 색종이가 터집니다.<br>
@@ -1167,7 +1291,16 @@
           <a href="#new-ja">新機能</a> ·
           <a href="#faq-ja">よくある質問</a>
         </nav>
-        <img class="hero-shot" src="study-stamp-landing-images/ja/01_home_streak.png" width="660" height="1434" alt="「今日」画面。8日目という大きな数字、直近7日の写真の列、今日の1時間32分と目標達成率102%">
+        <div class="hero-shots">
+          <figure>
+            <img class="hero-shot" src="study-stamp-landing-images/ja/01_home_streak.png" width="660" height="1434" alt="「今日」画面。8日目という大きな数字、直近7日の写真の列、今日の1時間32分と目標達成率102%">
+            <figcaption>iPhone</figcaption>
+          </figure>
+          <figure>
+            <img class="hero-shot" src="study-stamp-landing-images/ja/duo_outer_01_home_streak.png" width="699" height="1017" alt="閉じたiPhone Duoの外側の画面の「今日」画面。8日目という大きな数字、直近7日の写真の列、今日の1時間32分と達成率102%、右側に縦に並ぶタブバー">
+            <figcaption><span>iPhone Duo</span><span>(閉じた状態)</span></figcaption>
+          </figure>
+        </div>
       </section>
 
       <section id="how-ja" class="col">
@@ -1262,6 +1395,28 @@
         </div>
       </section>
 
+      <section id="duo-ja" class="col-wide">
+        <h2>iPhone Duoでは画面を左右に分けて</h2>
+        <p class="note">バージョン2.3.0から</p>
+        <p>iPhone Duoを開いて内側の画面を横向きに持つと、5つのタブすべてで画面が左右に分かれます。閉じているときや縦向きに持ったとき、そしてほかのiPhoneでは、これまでどおり1つの画面です。</p>
+        <div class="duo-grid">
+          <figure class="slide-card">
+            <img src="study-stamp-landing-images/ja/duo_01_home_streak.png" width="1200" height="844" loading="lazy" alt="横向きのiPhone Duoの「今日」画面。左側に9月15日から9月9日までの「その前の7日間」、右側に8日目という大きな数字と今日の1時間32分">
+            <figcaption>
+              <h3>「今日」の左に「その前の7日間」</h3>
+              <p>最近7日間より前の7日間を1日1行で表示します。行を押すと、その日の記録を見たり、その日付で記録したりできます。</p>
+            </figcaption>
+          </figure>
+          <figure class="slide-card">
+            <img src="study-stamp-landing-images/ja/duo_02_calendar_photos.png" width="1200" height="844" loading="lazy" alt="横向きのiPhone Duoのカレンダー画面。左側に2026年8月、右側に2026年9月のカレンダーが並び、日付ごとにその日の写真が入っています">
+            <figcaption>
+              <h3>カレンダーは2か月を並べて</h3>
+              <p>左に先月、右に今月を表示します。<span class="arrows">‹ ›</span>を押すと左右が一緒に切り替わります。</p>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section id="not-ja" class="col">
         <h2>このアプリがしないこと</h2>
         <ul class="nots">
@@ -1284,6 +1439,20 @@
         <h2>版ごとの新機能</h2>
         <p class="note">勉強スタンプが版ごとにどう変わってきたかをまとめました。</p>
         <details class="release" open>
+          <summary>2.3.0 · 審査中</summary>
+          <ul class="news">
+            <li>iPhone Duoを開いて内側の画面を横向きに持つと、5つのタブすべてで画面が左右に分かれます。<br>
+              「今日」は左側に、最近7日間のさらに前の7日間を「その前の7日間」として1日1行で表示し、行を押すとその日の記録を見たり、その日付で記録したりできます。<br>
+              カレンダーは先月と今月を、統計は前の期間と今の期間を左右に並べて表示し、‹ ›を押すと左右が一緒に切り替わります。<br>
+              アルバムは最初に画面の幅いっぱいのグリッドで表示され、写真を選ぶと右側にその記録が開きます。<br>
+              設定では、左のリストで選んだ項目が右側に開きます。</li>
+            <li>iPhone Duoの内側の画面を縦向きに持つと今までどおり1つの画面で、最近7日間の行とカレンダーのマスが広い幅に合わせて大きくなり、アルバムは1行に並ぶ写真が増えます。</li>
+            <li>カレンダーで選んだ日付が、記録を保存したりふりかえりを書いたりした後もそのまま残ります。</li>
+            <li>プロフィールを切り替えると、アルバムで開いていた記録が閉じ、切り替えたプロフィールのアルバムが表示されます。</li>
+            <li>VoiceOverがカレンダーと統計の期間名を見出しとして読み上げ、カレンダーの「シェア」ボタンでは、どの月をシェアするかも読み上げます。</li>
+          </ul>
+        </details>
+        <details class="release">
           <summary>2.2.0 · 2026年10月23日</summary>
           <ul class="news">
             <li>1日の目標のお祝いが表示されると、お知らせの真ん中から紙吹雪が舞います。<br>
